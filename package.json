@@ -1,0 +1,40 @@
+{
+  "name": "signet",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Signet, a trust critical e signing platform that produces sealed, tamper evident documents with a full audit certificate.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prototype": "node scripts/prototype-coordinates.mjs && node scripts/verify-proof-visually.mjs",
+    "keys": "node scripts/generate-keys.mjs",
+    "lifecycle": "node scripts/verify-lifecycle.mjs"
+  },
+  "dependencies": {
+    "@cantoo/pdf-lib": "2.9.1",
+    "lucide-react": "1.34.0",
+    "mongodb": "7.5.0",
+    "next": "16.3.2",
+    "nodemailer": "9.0.5",
+    "pdfjs-dist": "6.2.108",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-pdf": "10.5.0",
+    "signature_pad": "5.1.4",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "24.13.3",
+    "@types/nodemailer": "8.0.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "tailwindcss": "4.3.3",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
+  }
+}
