@@ -166,3 +166,5 @@ System
 5. Seal, certificate, approval, distribution.
 6. Versioning, expiry, reminders, cancel.
 7. Full lifecycle test of every path, then a trust and security review.
+
+8. Trigger deploy
