@@ -161,9 +161,12 @@ System
 
 1. Prototype PDF fill, flatten and coordinate mapping, prove a valid sealed PDF comes out.
 2. Scaffold, design system, database and storage layers.
-3. Auth, envelope creation, field placement UI.
-4. Send, token, OTP, recipient signing, decline.
-5. Seal, certificate, approval, distribution.
+3. Owner registration, login/logout, dashboard, PDF draft upload, recipient editing and field
+   placement.
+4. Draft validation/send, invitations, OTP verification, scoped recipient document/field access,
+   drawn signatures, consent, decline and manual reminders.
+5. Completed: verified audit review, approval, sealed certificate, private download and public
+   fingerprint verification. Remaining: distribution to signers.
 6. Versioning, expiry, reminders, cancel.
 7. Full lifecycle test of every path, then a trust and security review.
 

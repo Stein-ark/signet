@@ -112,6 +112,7 @@ async function createIndexes(): Promise<void> {
       { key: { status: 1, 'reminder.nextAt': 1 }, name: 'status_reminder' },
       // Public verification of a sealed file by its fingerprint.
       { key: { 'sealed.sha256': 1 }, name: 'sealed_fingerprint', sparse: true },
+      { key: { 'sealed.manifestDigest': 1 }, name: 'sealed_manifest', sparse: true },
     ]),
 
     db.collection('auditEvents').createIndexes([

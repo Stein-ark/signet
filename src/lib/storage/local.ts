@@ -15,7 +15,7 @@ import { assertValidKey, type StorageDriver } from '@/lib/storage/index';
  * driver is not a weaker security posture, only a weaker durability posture.
  */
 export function localDriver(): StorageDriver {
-  const root = path.resolve(process.cwd(), env().STORAGE_LOCAL_DIR);
+  const root = path.resolve(/*turbopackIgnore: true*/ process.cwd(), env().STORAGE_LOCAL_DIR);
 
   /**
    * Resolve a storage key to an absolute path and prove it stays inside the storage root.
@@ -24,7 +24,7 @@ export function localDriver(): StorageDriver {
    */
   function resolveKey(key: string): string {
     assertValidKey(key);
-    const target = path.resolve(root, key);
+    const target = path.resolve(/*turbopackIgnore: true*/ root, key);
     const rootWithSep = root.endsWith(path.sep) ? root : root + path.sep;
     if (!target.startsWith(rootWithSep)) {
       throw new Error('Refusing to touch a path outside the storage root.');

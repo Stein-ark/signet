@@ -56,6 +56,8 @@ export type CertificateManifest = {
   title: string;
   owner: { name: string; email: string };
   originalSha256: string;
+  /** Hash of the flattened agreement pages before certificate pages are appended. */
+  contentSha256: string;
   pageCount: number;
   signingOrder: string;
   createdAt: string;
@@ -295,6 +297,7 @@ function drawDocumentSummary(layout: Layout, fonts: Fonts, manifest: Certificate
     ['All signatures collected', formatTimestamp(manifest.completedAt)],
     ['Distribution approved by sender', formatTimestamp(manifest.approvedAt)],
     ['Original document SHA-256', chunkHash(manifest.originalSha256)],
+    ['Flattened agreement pages SHA-256', chunkHash(manifest.contentSha256)],
   ]);
 }
 

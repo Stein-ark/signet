@@ -32,9 +32,12 @@ export default function Home() {
           <Link href="#how-it-works">How it works</Link>
           <Link href="#trust">Trust &amp; security</Link>
         </nav>
-        <a className="header-cta" href="#how-it-works">
-          See how it works <ArrowRight aria-hidden="true" size={16} />
-        </a>
+        <div className="header-actions">
+          <Link className="header-sign-in" href="/login">Sign in</Link>
+          <Link className="header-cta" href="/register">
+            Get started <ArrowRight aria-hidden="true" size={16} />
+          </Link>
+        </div>
       </header>
 
       <section className="hero" aria-labelledby="hero-title">
@@ -45,9 +48,9 @@ export default function Home() {
             Send important documents for signing with identity checks, clear consent and a
             certificate that keeps the whole story together.
           </p>
-          <a className="primary-cta" href="#how-it-works">
-            Discover the signing journey <ArrowRight aria-hidden="true" size={17} />
-          </a>
+          <Link className="primary-cta" href="/register">
+            Create your account <ArrowRight aria-hidden="true" size={17} />
+          </Link>
           <p className="hero-footnote">Thoughtfully designed for agreements that matter.</p>
         </div>
 

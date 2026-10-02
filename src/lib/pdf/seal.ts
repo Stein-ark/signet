@@ -118,7 +118,6 @@ export async function sealEnvelope(input: SealInput): Promise<SealResult> {
 
   const fonts = {
     regular: await document.embedFont(StandardFonts.Helvetica),
-    bold: await document.embedFont(StandardFonts.HelveticaBold),
   };
 
   await stampFields(document, envelope, fonts);
@@ -205,7 +204,7 @@ function setSealedMetadata(document: PDFDocument, envelope: EnvelopeDoc, digest:
  * Stamping field values
  * ------------------------------------------------------------------ */
 
-type StampFonts = { regular: PDFFont; bold: PDFFont };
+type StampFonts = { regular: PDFFont };
 
 async function stampFields(
   document: PDFDocument,
@@ -218,7 +217,7 @@ async function stampFields(
   // across many fields, so this turns N storage reads into one.
   const imageCache = new Map<string, PDFImage>();
 
-  const loadImage = async (key: string): Promise<PDFImage | null> => {
+  const loadImage = async (key: string): Promise<PDFImage> => {
     const cached = imageCache.get(key);
     if (cached) return cached;
     try {
@@ -226,10 +225,8 @@ async function stampFields(
       const image = await document.embedPng(bytes);
       imageCache.set(key, image);
       return image;
-    } catch {
-      // A missing signature image must not silently produce a blank signature block, so the
-      // caller draws a visible fallback instead.
-      return null;
+    } catch (error) {
+      throw new Error('A collected signature image could not be loaded for sealing.', { cause: error });
     }
   };
 
@@ -238,7 +235,9 @@ async function stampFields(
 
     const page = pages[field.page - 1];
     const geometry = envelope.document.pages[field.page - 1];
-    if (!page || !geometry) continue;
+    if (!page || !geometry) {
+      throw new Error(`Field ${field.id} refers to a page outside the source document.`);
+    }
 
     const placed = placeRect(field, geometry);
 
@@ -246,11 +245,7 @@ async function stampFields(
       case 'signature':
       case 'initials': {
         const image = await loadImage(field.value);
-        if (image) {
-          drawImageContained(page, image, placed);
-        } else {
-          drawFallbackText(page, placed, fonts.bold, 'signature on file');
-        }
+        drawImageContained(page, image, placed);
         break;
       }
       case 'checkbox':
@@ -326,24 +321,6 @@ function drawFieldText(
   });
 }
 
-function drawFallbackText(
-  page: PDFPage,
-  placed: PlacedRect,
-  font: PDFFont,
-  label: string,
-): void {
-  const size = Math.min(9, placed.height * 0.5);
-  const [x, y] = localOffset(placed, 2, (placed.height - size) / 2);
-  page.drawText(label, {
-    x,
-    y,
-    size,
-    font,
-    color: rgb(0.4, 0.43, 0.5),
-    rotate: degrees(placed.rotation),
-  });
-}
-
 /**
  * Draw a check mark from two line segments.
  *
@@ -386,6 +363,7 @@ function buildManifest(
     title: envelope.title,
     owner: { name: envelope.ownerName, email: envelope.ownerEmail },
     originalSha256: envelope.document.sha256,
+    contentSha256,
     pageCount: envelope.document.pageCount,
     signingOrder: envelope.signingOrder,
     createdAt: envelope.createdAt.toISOString(),

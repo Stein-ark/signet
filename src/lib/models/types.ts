@@ -111,6 +111,9 @@ export type SealedDocumentInfo = StoredFile & {
   contentSha256: string;
   /** Ed25519 signature over the seal manifest, base64. */
   signature: string;
+  manifestDigest: string;
+  manifestJson: string;
+  publicKey: string;
   sealedAt: Date;
 };
 
@@ -146,6 +149,8 @@ export type RecipientDoc = {
   tokenHash: string | null;
   tokenIssuedAt: Date | null;
   tokenExpiresAt: Date | null;
+  /** Prior links remain valid until their original expiry while a reminder is delivered. */
+  tokenHistory?: { hash: string; expiresAt: Date }[];
 
   otp: OtpState;
 
@@ -222,6 +227,7 @@ export type EnvelopeDoc = {
   distribution: {
     approvedAt: Date | null;
     approvedBy: ObjectId | null;
+    approvalClaimAt?: Date | null;
     deliveredAt: Date | null;
     deliveredTo: string[];
   };
@@ -254,6 +260,7 @@ export const AUDIT_EVENT_TYPES = [
   'envelope.voided',
   'envelope.expired',
   'envelope.completed',
+  'envelope.declined',
   'envelope.approved',
   'envelope.distributed',
   'envelope.superseded',

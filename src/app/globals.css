@@ -78,6 +78,17 @@ a {
   font-weight: 600;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-sign-in {
+  color: #59635e;
+  font-size: 12px;
+}
+
 .header-cta {
   min-height: 41px;
   padding: 0 16px;
@@ -521,6 +532,14 @@ a {
   .header-cta {
     min-height: 36px;
     padding: 0 10px;
+    font-size: 10px;
+  }
+
+  .header-actions {
+    gap: 11px;
+  }
+
+  .header-sign-in {
     font-size: 10px;
   }
 
