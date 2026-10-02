@@ -1,6 +1,7 @@
 import { envelopes, type EnvelopeDoc, type RecipientDoc } from '@/lib/models/types';
 import { hashSecret } from '@/lib/util/crypto';
 import { notFound } from '@/lib/util/errors';
+import { recipientsUpNext } from '@/lib/envelopes/routing';
 
 export async function resolveSigningLink(token: string): Promise<{
   envelope: EnvelopeDoc;
@@ -29,13 +30,8 @@ export async function resolveSigningLink(token: string): Promise<{
     throw notFound('This signing request has already been completed.');
   }
 
-  if (envelope.signingOrder === 'sequential') {
-    const next = [...envelope.recipients]
-      .filter((item) => item.status !== 'signed')
-      .sort((a, b) => a.routingOrder - b.routingOrder)[0];
-    if (next?.id !== recipient.id) {
-      throw notFound('This signing request will become available after the preceding signer completes.');
-    }
+  if (!recipientsUpNext(envelope).some((item) => item.id === recipient.id)) {
+    throw notFound('This signing request will become available after the preceding signer completes.');
   }
 
   return { envelope, recipient };

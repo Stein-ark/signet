@@ -5,6 +5,7 @@ import { hashPassword } from '@/lib/auth/password';
 import { users, type UserDoc } from '@/lib/models/types';
 import { assertSameOrigin, ok, readJson, route, type RequestContext } from '@/lib/util/http';
 import { conflict } from '@/lib/util/errors';
+import { enforceIpRateLimit } from '@/lib/util/rate-limit';
 import { NextResponse } from 'next/server';
 
 function publicUser(user: UserDoc) {
@@ -13,6 +14,7 @@ function publicUser(user: UserDoc) {
 
 export const POST = route(async (request: Request, context: RequestContext): Promise<NextResponse> => {
   assertSameOrigin(request);
+  await enforceIpRateLimit('register', context.ip, 10, 60 * 60 * 1000);
   const input = await readJson(request, registerSchema);
   const now = new Date();
   const user: UserDoc = {
@@ -22,8 +24,6 @@ export const POST = route(async (request: Request, context: RequestContext): Pro
     passwordHash: await hashPassword(input.password),
     createdAt: now,
     updatedAt: now,
-    failedLoginCount: 0,
-    lockedUntil: null,
   };
 
   try {

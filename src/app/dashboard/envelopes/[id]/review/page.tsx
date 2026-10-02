@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { Check, FileText, ShieldCheck } from 'lucide-react';
 import { readOwnerSession } from '@/lib/auth/session';
 import { readChain, verifyChain } from '@/lib/audit/chain';
+import { missingEvidence } from '@/lib/audit/evidence';
 import { envelopes } from '@/lib/models/types';
 import { ObjectId } from 'mongodb';
 import { ApprovalActions } from './approval-actions';
@@ -35,6 +36,7 @@ export default async function EnvelopeReviewPage({
 
   const events = await readChain(envelope._id);
   const verification = verifyChain(events);
+  const evidenceGap = missingEvidence(envelope, events);
   const allSigned = envelope.recipients.length > 0 &&
     envelope.recipients.every((recipient) => recipient.status === 'signed');
   const requiredFieldsComplete = envelope.fields.every(
@@ -65,6 +67,11 @@ export default async function EnvelopeReviewPage({
         {!verification.valid && (
           <div className="review-integrity-error" role="alert">
             The audit trail does not verify at event {verification.brokenAt}. Do not approve this agreement.
+          </div>
+        )}
+        {verification.valid && evidenceGap && envelope.status === 'completed' && (
+          <div className="review-integrity-error" role="alert">
+            {evidenceGap} Do not approve this agreement.
           </div>
         )}
         {verification.valid && (
@@ -146,7 +153,7 @@ export default async function EnvelopeReviewPage({
               envelopeId={id}
               status={envelope.status}
               sealedSha256={envelope.sealed?.sha256 ?? null}
-              canApprove={verification.valid && allSigned && requiredFieldsComplete}
+              canApprove={verification.valid && !evidenceGap && allSigned && requiredFieldsComplete}
             />
             {envelope.status === 'completed' && (
               <p className="approval-readiness">

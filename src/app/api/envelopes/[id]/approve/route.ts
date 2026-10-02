@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { assertCsrf, requireOwner } from '@/lib/auth/session';
 import { readChain, recordEvent, verifyChain } from '@/lib/audit/chain';
+import { missingEvidence } from '@/lib/audit/evidence';
 import { storage, storageKey } from '@/lib/storage/index';
 import { envelopes } from '@/lib/models/types';
 import { issuerPublicKeyBase64, sealEnvelope } from '@/lib/pdf/seal';
@@ -42,6 +43,8 @@ export const POST = route(async (
   if (envelope.recipients.some((recipient) => !recipient.signatureKey || !recipient.consent)) {
     throw conflict('A signer is missing their signature or recorded consent.');
   }
+  const gap = missingEvidence(envelope, await readChain(envelopeId));
+  if (gap) throw conflict(`${gap} Approval was not completed.`);
 
   const now = new Date();
   const staleClaim = new Date(now.getTime() - APPROVAL_CLAIM_MAX_AGE_MS);

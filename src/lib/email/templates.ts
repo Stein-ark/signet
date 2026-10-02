@@ -27,3 +27,20 @@ export function otpEmail(input: { to: string; title: string; code: string }): Ou
     html: `<p>Your verification code for <strong>${title}</strong> is:</p><p style="font-size:28px;font-weight:bold;letter-spacing:6px">${input.code}</p><p>It expires in ${env().OTP_TTL_MINUTES} minutes. If you did not request it, you can ignore this email.</p>`,
   };
 }
+
+export function voidedEmail(input: {
+  to: string;
+  ownerName: string;
+  title: string;
+  reason: string;
+}): OutgoingEmail {
+  const owner = escapeHtml(input.ownerName);
+  const title = escapeHtml(input.title);
+  const reason = escapeHtml(input.reason);
+  return {
+    to: input.to,
+    subject: `${input.title} has been cancelled`,
+    text: `${input.ownerName} cancelled the signing request for "${input.title}". Your signing link no longer works and you do not need to do anything.\n\nReason given: ${input.reason}`,
+    html: `<p>${owner} cancelled the signing request for <strong>${title}</strong>. Your signing link no longer works and you do not need to do anything.</p><p>Reason given: ${reason}</p>`,
+  };
+}

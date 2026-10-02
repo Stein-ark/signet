@@ -167,8 +167,9 @@ System
    drawn signatures, consent, decline and manual reminders.
 5. Completed: verified audit review, approval, sealed certificate, private download and public
    fingerprint verification. Remaining: distribution to signers.
-6. Versioning, expiry, reminders, cancel.
-7. Full lifecycle test of every path, then a trust and security review.
+6. Completed: expiry, automatic reminders, cancel (void). Remaining: versioning.
+7. Lifecycle integration test in `src/test` (in progress: grows with each feature), then a trust
+   and security review.
 
 
 Trigger deploy

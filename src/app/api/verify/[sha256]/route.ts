@@ -1,11 +1,16 @@
 import { envelopes } from '@/lib/models/types';
-import { verifyManifestSignature } from '@/lib/pdf/seal';
-import { sha256Hex } from '@/lib/util/crypto';
+import { SEALED_RECORD_FIELDS, checkSealedRecord } from '@/lib/pdf/seal';
 import { notFound } from '@/lib/util/errors';
 import { ok, route, type RequestContext } from '@/lib/util/http';
 import type { NextResponse } from 'next/server';
 
 type RouteContext = { params: Promise<{ sha256: string }> };
+
+// Derived from the fields the check reads, so the projection cannot silently drop one again.
+const projection = Object.fromEntries([
+  ['_id', 1],
+  ...SEALED_RECORD_FIELDS.map((field) => [`sealed.${field}`, 1]),
+]);
 
 export const GET = route(async (
   _request: Request,
@@ -23,47 +28,17 @@ export const GET = route(async (
         { 'sealed.manifestDigest': sha256 },
       ],
     },
-    {
-      projection: {
-        _id: 1,
-        'sealed.sha256': 1,
-        'sealed.manifestDigest': 1,
-        'sealed.manifestJson': 1,
-        'sealed.signature': 1,
-        'sealed.publicKey': 1,
-        'sealed.sealedAt': 1,
-      },
-    },
+    { projection },
   );
   if (!envelope?.sealed) throw notFound('No sealed agreement has this fingerprint.');
 
-  let manifest: Record<string, unknown>;
-  try {
-    const parsed: unknown = JSON.parse(envelope.sealed.manifestJson);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Manifest is not an object.');
-    manifest = parsed as Record<string, unknown>;
-  } catch {
-    return ok({ verified: false, reason: 'manifest_invalid' });
-  }
-
-  const digestMatches = sha256Hex(envelope.sealed.manifestJson) === envelope.sealed.manifestDigest;
-  const signatureValid = digestMatches && verifyManifestSignature(
-    envelope.sealed.manifestJson,
-    envelope.sealed.signature,
-    envelope.sealed.publicKey,
-  );
-  const documentMatches =
-    manifest.envelopeId === envelope._id.toHexString() &&
-    manifest.sealedAt === envelope.sealed.sealedAt.toISOString() &&
-    manifest.contentSha256 === envelope.sealed.contentSha256;
+  const result = checkSealedRecord(envelope._id.toHexString(), envelope.sealed);
+  if (!('checks' in result)) return ok({ verified: false, reason: result.reason });
+  const { manifest } = result;
 
   return ok({
-    verified: signatureValid && documentMatches,
-    checks: {
-      manifestDigest: digestMatches,
-      issuerSignature: signatureValid,
-      documentRecord: documentMatches,
-    },
+    verified: result.verified,
+    checks: result.checks,
     agreement: {
       id: envelope._id.toHexString(),
       title: typeof manifest.title === 'string' ? manifest.title : 'Sealed agreement',

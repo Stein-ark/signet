@@ -1,5 +1,6 @@
 import { assertCsrf } from '@/lib/auth/session';
 import { recordEvent } from '@/lib/audit/chain';
+import { AWAITING_STATUSES } from '@/lib/envelopes/routing';
 import { requireSigningActor } from '@/lib/signing/session';
 import { envelopes } from '@/lib/models/types';
 import { conflict } from '@/lib/util/errors';
@@ -21,19 +22,24 @@ export const POST = route(async (
   assertCsrf(request, session);
   const { reason } = await readJson(request, declineSchema);
   const now = new Date();
-  const recipients = envelope.recipients.map((item) =>
-    item.id === recipient.id
-      ? { ...item, status: 'declined' as const, declinedAt: now, declineReason: reason, lastIp: context.ip, lastUserAgent: context.userAgent }
-      : item,
-  );
   const update = await (await envelopes()).updateOne(
     {
       _id: envelope._id,
       status: 'sent',
-      updatedAt: envelope.updatedAt,
-      recipients: { $elemMatch: { id: recipient.id, status: { $in: ['invited', 'viewed', 'verified'] } } },
+      recipients: { $elemMatch: { id: recipient.id, status: { $in: AWAITING_STATUSES } } },
     },
-    { $set: { recipients, status: 'declined', updatedAt: now } },
+    {
+      $set: {
+        'recipients.$.status': 'declined',
+        'recipients.$.declinedAt': now,
+        'recipients.$.declineReason': reason,
+        'recipients.$.lastIp': context.ip,
+        'recipients.$.lastUserAgent': context.userAgent,
+        status: 'declined',
+        'reminder.nextAt': null,
+        updatedAt: now,
+      },
+    },
   );
   if (update.matchedCount !== 1) throw conflict('This signing request changed. Reload and try again.');
 

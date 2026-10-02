@@ -13,13 +13,15 @@ export const GET = route(async (
 ): Promise<NextResponse> => {
   const { token } = await routeContext.params;
   const { envelope, recipient, session } = await requireSigningActor(token);
-  if (recipient.status === 'verified') {
+  if (!recipient.viewedAt) {
+    // The status stays "verified": viewing is recorded as a timestamp and an event, so the
+    // status never moves backwards from verified to the earlier "viewed" stage.
     const viewedAt = new Date();
     const update = await (await envelopes()).updateOne(
-      { _id: envelope._id, recipients: { $elemMatch: { id: recipient.id, status: 'verified' } } },
-      { $set: { 'recipients.$.status': 'viewed', 'recipients.$.viewedAt': viewedAt, updatedAt: viewedAt } },
+      { _id: envelope._id, recipients: { $elemMatch: { id: recipient.id, viewedAt: null } } },
+      { $set: { 'recipients.$.viewedAt': viewedAt, updatedAt: viewedAt } },
     );
-    if (update.matchedCount === 1) {
+    if (update.modifiedCount === 1) {
       await recordEvent({
         envelopeId: envelope._id,
         versionGroupId: envelope.versionGroupId,

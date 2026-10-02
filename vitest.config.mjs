@@ -11,5 +11,9 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    setupFiles: ['./src/test/setup.ts'],
+    // Integration tests start an in-memory MongoDB replica set, which takes a few seconds.
+    testTimeout: 30_000,
+    hookTimeout: 120_000,
   },
 });

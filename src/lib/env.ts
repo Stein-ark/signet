@@ -82,6 +82,13 @@ const schema = z
     /** Bearer secret for the maintenance endpoint that expires envelopes and sends reminders. */
     CRON_SECRET: z.string().min(16),
 
+    /**
+     * Number of reverse proxies in front of the app that append to X-Forwarded-For. The client
+     * address is read that many entries from the right, because everything further left was
+     * supplied by the client and can be forged. 0 ignores forwarding headers entirely.
+     */
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(10).default(1),
+
     MAX_UPLOAD_BYTES: z.coerce.number().int().positive().default(25 * 1024 * 1024),
     SIGNING_SESSION_MINUTES: z.coerce.number().int().positive().default(45),
     OWNER_SESSION_DAYS: z.coerce.number().int().positive().default(7),

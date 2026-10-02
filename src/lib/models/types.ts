@@ -25,8 +25,6 @@ export type UserDoc = {
   passwordHash: string;
   createdAt: Date;
   updatedAt: Date;
-  failedLoginCount: number;
-  lockedUntil: Date | null;
 };
 
 export type SessionKind = 'owner' | 'signing';
@@ -161,6 +159,8 @@ export type RecipientDoc = {
   initialsKey: string | null;
 
   invitedAt: Date | null;
+  /** Last time the link was fetched. Throttles the link_opened audit event. */
+  linkOpenedAt?: Date | null;
   viewedAt: Date | null;
   signedAt: Date | null;
   declinedAt: Date | null;

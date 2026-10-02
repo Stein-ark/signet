@@ -9,10 +9,10 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run --exclude '**/*.integration.test.ts'",
     "test:watch": "vitest",
     "prototype": "node scripts/prototype-coordinates.mjs && node scripts/verify-proof-visually.mjs",
-    "keys": "node scripts/generate-keys.mjs",
-    "lifecycle": "node scripts/verify-lifecycle.mjs"
+    "keys": "node scripts/generate-keys.mjs"
   },
   "dependencies": {
     "@cantoo/pdf-lib": "2.9.1",
@@ -33,6 +33,7 @@
     "@types/nodemailer": "8.0.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
+    "mongodb-memory-server": "^11.3.0",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
     "vitest": "4.1.11"

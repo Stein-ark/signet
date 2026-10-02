@@ -106,6 +106,8 @@ async function createIndexes(): Promise<void> {
       // Signing link resolution. Multikey over the embedded recipients array, which keeps
       // token lookup to a single indexed read of a single document.
       { key: { 'recipients.tokenHash': 1 }, name: 'recipient_token', sparse: true },
+      // Links issued before a reminder stay valid until expiry and are resolved through here.
+      { key: { 'recipients.tokenHistory.hash': 1 }, name: 'recipient_token_history', sparse: true },
       { key: { versionGroupId: 1, version: -1 }, name: 'version_history' },
       // Maintenance sweeps.
       { key: { status: 1, expiresAt: 1 }, name: 'status_expiry' },

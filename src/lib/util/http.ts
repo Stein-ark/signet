@@ -18,26 +18,32 @@ export type RequestContext = {
   requestId: string;
 };
 
-/**
- * Best effort client IP.
- *
- * Behind a proxy the socket address is the proxy, so we read the standard forwarding headers.
- * These headers are attacker controllable when the app is exposed directly, which is why the
- * IP is recorded as evidence in the audit trail rather than used for any access decision.
- */
-export function requestContext(request: Request): RequestContext {
-  const headers = request.headers;
-  const forwarded = headers.get('x-forwarded-for');
-  const ip =
-    (forwarded ? forwarded.split(',')[0]?.trim() : null) ||
-    headers.get('x-real-ip') ||
-    headers.get('cf-connecting-ip') ||
-    'unknown';
+export const UNKNOWN_IP = 'unknown';
 
+/**
+ * Client IP as reported by the trusted proxy chain.
+ *
+ * Route handlers never see the socket address, only headers. Each proxy appends the address it
+ * received the connection from to X-Forwarded-For, so with TRUST_PROXY_HOPS proxies in front of
+ * the app the client is that many entries from the right. Entries further left were written by
+ * the client and are ignored, which is what stops a caller from choosing their own IP for rate
+ * limiting or for the evidence printed on the certificate.
+ */
+export function clientIp(headers: Headers, trustedHops: number): string {
+  if (trustedHops <= 0) return UNKNOWN_IP;
+  const forwarded = headers.get('x-forwarded-for');
+  if (!forwarded) return UNKNOWN_IP;
+  const hops = forwarded.split(',').map((entry) => entry.trim()).filter(Boolean);
+  const ip = hops[hops.length - trustedHops];
+  return ip ? ip.slice(0, 64) : UNKNOWN_IP;
+}
+
+export function requestContext(request: Request, requestId: string = randomUUID()): RequestContext {
+  const headers = request.headers;
   return {
-    ip: ip.slice(0, 64),
+    ip: clientIp(headers, env().TRUST_PROXY_HOPS),
     userAgent: (headers.get('user-agent') ?? 'unknown').slice(0, 512),
-    requestId: randomUUID(),
+    requestId,
   };
 }
 
@@ -113,11 +119,12 @@ export function route<Args extends unknown[]>(
   handler: (request: Request, context: RequestContext, ...args: Args) => Promise<NextResponse>,
 ) {
   return async (request: Request, ...args: Args): Promise<NextResponse> => {
-    const context = requestContext(request);
+    const requestId = randomUUID();
     try {
-      return await handler(request, context, ...args);
+      // Built inside the try because it reads the environment, which throws when misconfigured.
+      return await handler(request, requestContext(request, requestId), ...args);
     } catch (error) {
-      return toErrorResponse(error, context.requestId);
+      return toErrorResponse(error, requestId);
     }
   };
 }

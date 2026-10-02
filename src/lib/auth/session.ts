@@ -161,9 +161,11 @@ export async function createSigningSession(
     revokedAt: null,
   });
 
+  // No CSRF cookie here. The signing page receives its token in the session response body, and
+  // the shared CSRF cookie belongs to the owner session: overwriting it would break every owner
+  // action in a browser that has also signed a document.
   const jar = await cookies();
   jar.set(signingCookieName(envelopeId), token, cookieOptions(maxAge));
-  jar.set(CSRF_COOKIE, csrfToken, { ...cookieOptions(maxAge), httpOnly: false });
 }
 
 /**

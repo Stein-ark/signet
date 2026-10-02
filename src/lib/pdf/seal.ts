@@ -10,7 +10,7 @@ import {
   type PDFImage,
   type PDFPage,
 } from '@cantoo/pdf-lib';
-import type { EnvelopeDoc, FieldDoc, PageGeometry } from '@/lib/models/types';
+import type { EnvelopeDoc, FieldDoc, PageGeometry, SealedDocumentInfo } from '@/lib/models/types';
 import { localOffset, placeRect, type PlacedRect } from '@/lib/pdf/coordinates';
 import { sanitizeForPdf, truncateToWidth } from '@/lib/pdf/text';
 import {
@@ -396,3 +396,61 @@ export { buildManifest as buildSealManifest };
 
 /** Re-export for callers that need the exact geometry helper used during stamping. */
 export type { PageGeometry };
+
+/* ------------------------------------------------------------------ *
+ * Verification
+ * ------------------------------------------------------------------ */
+
+/** Every sealed field `checkSealedRecord` reads. Queries feeding it must project all of these. */
+export const SEALED_RECORD_FIELDS = [
+  'sha256',
+  'contentSha256',
+  'manifestDigest',
+  'manifestJson',
+  'signature',
+  'publicKey',
+  'sealedAt',
+] as const satisfies readonly (keyof SealedDocumentInfo)[];
+
+export type SealedRecord = Pick<SealedDocumentInfo, (typeof SEALED_RECORD_FIELDS)[number]>;
+
+export type SealVerification =
+  | { verified: false; reason: 'manifest_invalid' }
+  | {
+      verified: boolean;
+      checks: { manifestDigest: boolean; issuerSignature: boolean; documentRecord: boolean };
+      manifest: Record<string, unknown>;
+    };
+
+/**
+ * Check a stored seal: the manifest hashes to its recorded digest, the issuer signature over it
+ * is valid, and the manifest describes this envelope's stored seal.
+ */
+export function checkSealedRecord(envelopeId: string, sealed: SealedRecord): SealVerification {
+  let manifest: Record<string, unknown>;
+  try {
+    const parsed: unknown = JSON.parse(sealed.manifestJson);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Manifest is not an object.');
+    manifest = parsed as Record<string, unknown>;
+  } catch {
+    return { verified: false, reason: 'manifest_invalid' };
+  }
+
+  const manifestDigest = sha256Hex(sealed.manifestJson) === sealed.manifestDigest;
+  const issuerSignature = manifestDigest && verifyManifestSignature(
+    sealed.manifestJson,
+    sealed.signature,
+    sealed.publicKey,
+  );
+  const documentRecord =
+    manifest.envelopeId === envelopeId &&
+    manifest.sealedAt === sealed.sealedAt.toISOString() &&
+    typeof sealed.contentSha256 === 'string' &&
+    manifest.contentSha256 === sealed.contentSha256;
+
+  return {
+    verified: issuerSignature && documentRecord,
+    checks: { manifestDigest, issuerSignature, documentRecord },
+    manifest,
+  };
+}

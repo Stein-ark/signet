@@ -244,6 +244,69 @@
   line-height: 1.5;
 }
 
+.agreement-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.remind-control > .void-trigger {
+  border-color: #f0d5d1;
+  color: #a33d32;
+}
+
+.void-panel {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 4px);
+  right: 0;
+  display: grid;
+  gap: 6px;
+  width: 240px;
+  padding: 10px;
+  border: 1px solid #f0d5d1;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(31, 43, 35, 0.08);
+  font-size: 10px;
+}
+
+.void-panel label {
+  color: #3d4740;
+  font-weight: 600;
+}
+
+.void-panel input {
+  min-height: 29px;
+  padding: 0 8px;
+  border: 1px solid #dce4dc;
+  border-radius: 3px;
+  font: inherit;
+}
+
+.void-panel p {
+  margin: 0;
+  color: #6b766e;
+}
+
+.void-panel .void-error {
+  color: #a33d32;
+}
+
+.void-panel button {
+  min-height: 29px;
+  border: 0;
+  border-radius: 3px;
+  background: #a33d32;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.void-panel button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .remind-result.failed {
   border-color: #f0d5d1;
   background: #fff8f6;

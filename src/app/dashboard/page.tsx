@@ -6,6 +6,7 @@ import { readOwnerSession } from '@/lib/auth/session';
 import { envelopes, type EnvelopeDoc } from '@/lib/models/types';
 import { SignOutButton } from './sign-out-button';
 import { RemindButton } from './remind-button';
+import { VoidButton } from './void-button';
 import './dashboard.css';
 
 const statusLabels: Record<EnvelopeDoc['status'], string> = {
@@ -119,7 +120,12 @@ export default async function DashboardPage() {
                   <span className={`agreement-status status-${row.status}`}>
                     {statusLabels[row.status]}
                   </span>
-                  {row.status === 'sent' && <RemindButton envelopeId={row._id.toHexString()} />}
+                  {row.status === 'sent' && (
+                    <span className="agreement-actions">
+                      <RemindButton envelopeId={row._id.toHexString()} />
+                      <VoidButton envelopeId={row._id.toHexString()} />
+                    </span>
+                  )}
                   {row.status === 'approved' && (
                     <Link className="dashboard-download" href={`/api/envelopes/${row._id.toHexString()}/sealed`}>
                       Download

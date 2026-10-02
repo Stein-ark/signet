@@ -4,6 +4,7 @@ import { recordEvent } from '@/lib/audit/chain';
 import { logEmail } from '@/lib/email/log';
 import { sendEmail } from '@/lib/email/send';
 import { invitationEmail } from '@/lib/email/templates';
+import { recipientsUpNext } from '@/lib/envelopes/routing';
 import { envelopes } from '@/lib/models/types';
 import { createSecretToken } from '@/lib/util/crypto';
 import { assertSameOrigin, ok, route, type RequestContext } from '@/lib/util/http';
@@ -48,7 +49,7 @@ export const POST = route(async (
 
   const now = new Date();
   const tokens = new Map<string, string>();
-  const recipients = envelope.recipients.map((recipient) => {
+  const minted = envelope.recipients.map((recipient) => {
     const { token, hash } = createSecretToken('signing-link');
     tokens.set(recipient.id, token);
     return {
@@ -58,9 +59,17 @@ export const POST = route(async (
       tokenExpiresAt: envelope.expiresAt,
       tokenHistory: [],
       status: 'invited' as const,
-      invitedAt: now,
     };
   });
+  // In sequential routing only the first group is emailed now. Later groups are invited, with a
+  // freshly minted link, when the group before them finishes signing.
+  const firstGroup = new Set(
+    recipientsUpNext({ signingOrder: envelope.signingOrder, recipients: minted }).map((recipient) => recipient.id),
+  );
+  const recipients = minted.map((recipient) => ({
+    ...recipient,
+    invitedAt: firstGroup.has(recipient.id) ? now : null,
+  }));
 
   const updated = await collection.updateOne(
     { _id: envelopeId, ownerId: user._id, status: 'draft', updatedAt: envelope.updatedAt },
@@ -82,7 +91,7 @@ export const POST = route(async (
   });
 
   const deliveryFailures: string[] = [];
-  for (const recipient of recipients) {
+  for (const recipient of recipients.filter((item) => firstGroup.has(item.id))) {
     const message = invitationEmail({
       to: recipient.email,
       ownerName: envelope.ownerName,
@@ -126,5 +135,5 @@ export const POST = route(async (
     );
   }
 
-  return ok({ envelope: { id: envelopeId.toHexString(), status: 'sent' }, delivered: recipients.length });
+  return ok({ envelope: { id: envelopeId.toHexString(), status: 'sent' }, delivered: firstGroup.size });
 });

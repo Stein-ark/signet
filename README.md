@@ -20,7 +20,7 @@ features require a MongoDB instance at `mongodb://127.0.0.1:27017` or a `MONGODB
 in `.env.local`.
 
 For configuration options and storage/email providers, see [`.env.example`](./.env.example).
-Use `npm run typecheck` and `npm run build` to validate changes.
+Use `npm run typecheck`, `npm test` and `npm run build` to validate changes.
 
 ## Project status
 
@@ -32,6 +32,22 @@ drawn signatures, consent, decline, reminders, audit review, approval, sealing, 
 downloads, and public seal verification are implemented. Production
 email requires `EMAIL_DRIVER=smtp` or `EMAIL_DRIVER=resend` and provider credentials in the
 private environment. The default console provider is development-only and prints verification
-codes and signing links in the server log; it is rejected in production. Automated
-expiry/reminder maintenance, distribution, and versioning remain to be implemented in the
-sequence described in [`PLAN.md`](./PLAN.md).
+codes and signing links in the server log; it is rejected in production.
+
+Owners can cancel an agreement that is out for signature. Expiry, automatic reminders and
+recovery of interrupted completions run from `POST /api/cron/maintenance`, which a scheduler
+should call every few minutes with `Authorization: Bearer $CRON_SECRET`. Distribution of the
+sealed copy to signers and versioning (re-issuing a corrected agreement) remain to be
+implemented in the sequence described in [`PLAN.md`](./PLAN.md).
+
+## Deployment notes
+
+Set `TRUST_PROXY_HOPS` to the number of reverse proxies in front of the app (1 for a typical
+platform edge or load balancer). Client IPs recorded as evidence and used for rate limiting are
+read from that position in `X-Forwarded-For`; with `0`, IP-based limits are skipped.
+
+## Tests
+
+`npm test` runs the unit tests and an end-to-end lifecycle test that drives the real route
+handlers against an in-memory MongoDB replica set (downloaded on first run).
+`npm run test:unit` skips the integration test.

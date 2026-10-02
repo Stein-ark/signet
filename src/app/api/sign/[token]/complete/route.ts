@@ -1,8 +1,11 @@
+import { PDFDocument } from '@cantoo/pdf-lib';
 import { assertCsrf } from '@/lib/auth/session';
 import { recordEvent } from '@/lib/audit/chain';
+import { completeIfAllSigned, inviteNextRecipients } from '@/lib/envelopes/completion';
+import { AWAITING_STATUSES } from '@/lib/envelopes/routing';
 import { storage, storageKey } from '@/lib/storage/index';
 import { requireSigningActor } from '@/lib/signing/session';
-import { envelopes, type ConsentRecord, type FieldDoc } from '@/lib/models/types';
+import { envelopes, type ConsentRecord } from '@/lib/models/types';
 import { conflict } from '@/lib/util/errors';
 import { assertSameOrigin, ok, readJson, route, type RequestContext } from '@/lib/util/http';
 import { z } from 'zod';
@@ -19,7 +22,14 @@ const CONSENT_TEXT =
   'I have read this document, agree to sign it electronically, and intend my electronic signature to be legally binding.';
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
-function decodePng(encoded: string): Buffer {
+/**
+ * Decode and fully validate a signature image.
+ *
+ * The header check rejects obvious junk cheaply. The image is then embedded into a scratch PDF
+ * with the same library the sealing pipeline uses, so a PNG that would only fail at approval
+ * time, after every other signer has finished, is rejected now while the signer can redraw it.
+ */
+async function decodePng(encoded: string): Promise<Buffer> {
   const bytes = Buffer.from(encoded, 'base64');
   if (bytes.length < 24 || !bytes.subarray(0, 8).equals(PNG_SIGNATURE)) {
     throw conflict('The signature image is not a valid PNG.');
@@ -28,6 +38,11 @@ function decodePng(encoded: string): Buffer {
   const height = bytes.readUInt32BE(20);
   if (width < 1 || height < 1 || width > 4096 || height > 2048 || width * height > 4_000_000) {
     throw conflict('The signature image dimensions are too large.');
+  }
+  try {
+    await (await PDFDocument.create()).embedPng(bytes);
+  } catch {
+    throw conflict('The signature image could not be read. Clear it and draw it again.');
   }
   return bytes;
 }
@@ -43,31 +58,26 @@ export const POST = route(async (
   assertCsrf(request, session);
   const input = await readJson(request, inputSchema);
 
-  const signatureFields = envelope.fields.filter((field) => field.recipientId === recipient.id && field.type === 'signature');
-  if (!signatureFields.length) throw conflict('This request does not have a signature field for you.');
-  const signatureBytes = decodePng(input.signaturePng);
-  const initialsFields = envelope.fields.filter((field) => field.recipientId === recipient.id && field.type === 'initials');
-  const initialsBytes = input.initialsPng ? decodePng(input.initialsPng) : null;
-  if (initialsFields.some((field) => field.required) && !initialsBytes) {
+  const ownFields = envelope.fields.filter((field) => field.recipientId === recipient.id);
+  if (!ownFields.some((field) => field.type === 'signature')) {
+    throw conflict('This request does not have a signature field for you.');
+  }
+  const signatureBytes = await decodePng(input.signaturePng);
+  const initialsBytes = input.initialsPng ? await decodePng(input.initialsPng) : null;
+  if (ownFields.some((field) => field.type === 'initials' && field.required) && !initialsBytes) {
     throw conflict('Add your initials before completing this signature.');
   }
 
-  const currentFields = envelope.fields.map((field) => {
-    if (field.recipientId !== recipient.id) return field;
-    if (field.type === 'signature') return { ...field, value: '__signature__', filledAt: new Date() };
-    if (field.type === 'initials' && initialsBytes) return { ...field, value: '__initials__', filledAt: new Date() };
-    if (field.type === 'date' && !field.value) return { ...field, value: new Date().toISOString().slice(0, 10), filledAt: new Date() };
-    if (field.type === 'checkbox' && field.value === null) return { ...field, value: 'false', filledAt: new Date() };
-    return field;
-  });
-  const missing = currentFields.find(
-    (field) => field.recipientId === recipient.id && field.required &&
-      (field.value === null || (field.value === '' && field.type !== 'checkbox')),
+  // Signature, initials, blank dates and unticked checkboxes are filled by this request, so
+  // only the remaining types can be missing.
+  const missing = ownFields.find(
+    (field) => field.required && field.type === 'text' && (field.value === null || field.value === ''),
   );
   if (missing) throw conflict(`Complete the required ${missing.label || missing.type} field before signing.`);
 
+  const hasInitials = ownFields.some((field) => field.type === 'initials');
   const signatureKey = storageKey('envelopes', envelope._id.toHexString(), 'signature', 'png');
-  const initialsKey = initialsBytes
+  const initialsKey = initialsBytes && hasInitials
     ? storageKey('envelopes', envelope._id.toHexString(), 'initials', 'png')
     : null;
   await storage().put(signatureKey, signatureBytes, 'image/png');
@@ -85,42 +95,46 @@ export const POST = route(async (
     adoptedName: input.adoptedName,
     signatureType: 'drawn',
   };
-  const recipients = envelope.recipients.map((item) =>
-    item.id === recipient.id
-      ? {
-          ...item,
-          status: 'signed' as const,
-          consent,
-          signatureKey,
-          initialsKey,
-          signedAt: now,
-          lastIp: context.ip,
-          lastUserAgent: context.userAgent,
-        }
-      : item,
-  );
-  const fields: FieldDoc[] = currentFields.map((field) => {
-    if (field.recipientId !== recipient.id) return field;
-    if (field.type === 'signature') return { ...field, value: signatureKey };
-    if (field.type === 'initials' && initialsKey) return { ...field, value: initialsKey };
-    return field;
-  });
-  const complete = recipients.every((item) => item.status === 'signed' || item.status === 'declined');
+
+  // Every path below names this recipient explicitly, so the update cannot touch another
+  // recipient's state and needs no whole document version check. That is what lets several
+  // recipients of a parallel envelope sign at once without conflicting.
+  const set: Record<string, unknown> = {
+    'recipients.$[me].status': 'signed',
+    'recipients.$[me].consent': consent,
+    'recipients.$[me].signatureKey': signatureKey,
+    'recipients.$[me].initialsKey': initialsKey,
+    'recipients.$[me].signedAt': now,
+    'recipients.$[me].lastIp': context.ip,
+    'recipients.$[me].lastUserAgent': context.userAgent,
+    'fields.$[signature].value': signatureKey,
+    'fields.$[signature].filledAt': now,
+    'fields.$[blankDate].value': now.toISOString().slice(0, 10),
+    'fields.$[blankDate].filledAt': now,
+    'fields.$[blankCheckbox].value': 'false',
+    'fields.$[blankCheckbox].filledAt': now,
+    updatedAt: now,
+  };
+  const arrayFilters: Record<string, unknown>[] = [
+    { 'me.id': recipient.id },
+    { 'signature.recipientId': recipient.id, 'signature.type': 'signature' },
+    { 'blankDate.recipientId': recipient.id, 'blankDate.type': 'date', 'blankDate.value': { $in: [null, ''] } },
+    { 'blankCheckbox.recipientId': recipient.id, 'blankCheckbox.type': 'checkbox', 'blankCheckbox.value': null },
+  ];
+  if (initialsKey) {
+    set['fields.$[initials].value'] = initialsKey;
+    set['fields.$[initials].filledAt'] = now;
+    arrayFilters.push({ 'initials.recipientId': recipient.id, 'initials.type': 'initials' });
+  }
+
   const update = await (await envelopes()).updateOne(
     {
       _id: envelope._id,
       status: 'sent',
-      updatedAt: envelope.updatedAt,
-      recipients: { $elemMatch: { id: recipient.id, status: { $in: ['invited', 'viewed', 'verified'] } } },
+      recipients: { $elemMatch: { id: recipient.id, status: { $in: AWAITING_STATUSES } } },
     },
-    {
-      $set: {
-        recipients,
-        fields,
-        updatedAt: now,
-        ...(complete ? { status: 'completed', completedAt: now } : {}),
-      },
-    },
+    { $set: set },
+    { arrayFilters },
   );
   if (update.matchedCount !== 1) {
     await Promise.all([
@@ -154,17 +168,11 @@ export const POST = route(async (
     userAgent: context.userAgent,
     meta: { signedAt: now.toISOString() },
   });
-  if (complete) {
-    await recordEvent({
-      envelopeId: envelope._id,
-      versionGroupId: envelope.versionGroupId,
-      type: 'envelope.completed',
-      actorType: 'system',
-      ip: context.ip,
-      userAgent: context.userAgent,
-      meta: { completedAt: now.toISOString() },
-    });
-  }
+
+  // Completion is decided after the signature events so the chain reads in the order things
+  // happened. If this step is interrupted, the maintenance sweep completes the envelope later.
+  const complete = await completeIfAllSigned(envelope, context);
+  if (!complete) await inviteNextRecipients(envelope._id, context);
 
   return ok({ signed: true, envelopeCompleted: complete, signedAt: now });
 });

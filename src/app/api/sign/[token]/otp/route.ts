@@ -8,7 +8,7 @@ import type { EmailResult } from '@/lib/email/send';
 import { otpEmail } from '@/lib/email/templates';
 import { envelopes } from '@/lib/models/types';
 import { resolveSigningLink } from '@/lib/signing/resolve';
-import { enforceOtpRateLimit } from '@/lib/signing/rate-limit';
+import { enforceIpRateLimit, enforceRateLimit } from '@/lib/util/rate-limit';
 import { createOtp, hashSecret, safeEqual } from '@/lib/util/crypto';
 import { AppError, conflict } from '@/lib/util/errors';
 import type { NextResponse } from 'next/server';
@@ -24,8 +24,8 @@ export const POST = route(async (
   assertSameOrigin(request);
   const { token } = await routeContext.params;
   const { envelope, recipient } = await resolveSigningLink(token);
-  await enforceOtpRateLimit('send', `recipient:${recipient.id}`, 3);
-  await enforceOtpRateLimit('send', `ip:${context.ip}`, 20);
+  await enforceRateLimit('otp-send:recipient', recipient.id, 3);
+  await enforceIpRateLimit('otp-send', context.ip, 20);
 
   const now = new Date();
   const otp = createOtp();
@@ -100,8 +100,8 @@ export const PUT = route(async (
   assertSameOrigin(request);
   const { token } = await routeContext.params;
   const { envelope, recipient } = await resolveSigningLink(token);
-  await enforceOtpRateLimit('verify', `recipient:${recipient.id}`, 10);
-  await enforceOtpRateLimit('verify', `ip:${context.ip}`, 30);
+  await enforceRateLimit('otp-verify:recipient', recipient.id, 10);
+  await enforceIpRateLimit('otp-verify', context.ip, 30);
   const { code } = await readJson(request, verifySchema);
 
   const now = new Date();
