@@ -153,7 +153,7 @@ export function s3Driver(): StorageDriver {
     url: string;
     headers: Record<string, string>;
     method: string;
-    body?: Buffer;
+    body?: ArrayBuffer;
   };
 
   return {
@@ -163,6 +163,7 @@ export function s3Driver(): StorageDriver {
       assertValidKey(key);
       const ciphertext = encryptBuffer(body);
       const payloadHash = sha256Hex(ciphertext);
+      const requestBody = new Uint8Array(ciphertext).buffer;
 
       await send(() => {
         const signed = buildRequest(key, payloadHash, 'PUT', {
@@ -176,7 +177,7 @@ export function s3Driver(): StorageDriver {
             'content-type': contentType,
             'content-length': String(ciphertext.length),
           },
-          body: ciphertext,
+          body: requestBody,
         };
       }, true);
     },
