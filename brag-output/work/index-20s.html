@@ -1,0 +1,424 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+:root {
+  --ink: #17201d; --muted: #68736d; --paper: #f8f8f4; --green: #244c3c;
+  --green-light: #e5eee8; --line: #e2e5df;
+  --serif: Georgia, 'Noto Serif Display', 'Noto Serif', 'Times New Roman', serif;
+  --sans: Arial, 'Liberation Sans', Helvetica, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body {
+  background: radial-gradient(ellipse at 72% 48%, rgb(227 235 226 / 70%), transparent 48%), var(--paper);
+  color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased;
+}
+.abs { position: absolute; }
+.scene { position: absolute; inset: 0; opacity: 0; }
+.orbit { position: absolute; border: 1.5px solid rgb(67 104 78 / 10%); border-radius: 50%; left: 50%; top: 50%; }
+.eyebrow { margin: 0; color: #65776c; font-size: 17px; font-weight: 700; letter-spacing: 3px; display: flex; align-items: center; gap: 14px; }
+.eyebrow .dot { width: 11px; height: 11px; border-radius: 50%; background: #71917c; }
+.serif { font-family: var(--serif); font-weight: 400; }
+em { color: var(--green); }
+
+/* hook */
+#hook-title { left: 0; right: 0; top: 250px; text-align: center; font-size: 118px; letter-spacing: -4px; line-height: 1.08; }
+#hook-title div { will-change: transform, opacity; }
+#sig-wrap { left: 560px; top: 330px; width: 800px; }
+#sig-wrap svg { display: block; width: 800px; height: 267px; overflow: visible; }
+#sig-rule { height: 2px; background: #d8ded8; margin-top: -30px; }
+#sig-cap { margin-top: 14px; color: #a1a8a1; font-size: 15px; letter-spacing: 3px; display: flex; justify-content: space-between; }
+#sig-cap b { color: #52755d; }
+
+/* reveal */
+#brand { left: 0; right: 0; top: 330px; display: flex; justify-content: center; align-items: center; gap: 26px; }
+.mark { background: url(logo.png) no-repeat; mix-blend-mode: multiply; }
+.mark.big { width: 110px; height: 100px; background-size: 344px auto; background-position: -119px -44px; }
+.mark.small { width: 55px; height: 50px; background-size: 172px auto; background-position: -60px -22px; }
+#brand span { font-family: var(--serif); font-weight: 700; font-size: 150px; letter-spacing: -9px; }
+#reveal-eyebrow { left: 0; right: 0; top: 560px; justify-content: center; }
+#reveal-line { left: 0; right: 0; top: 615px; text-align: center; font-size: 58px; letter-spacing: -1.5px; color: #2b3632; }
+
+/* feature scenes */
+.feat-left { position: absolute; left: 170px; top: 0; bottom: 0; width: 700px; display: flex; flex-direction: column; justify-content: center; }
+.feat-num { font-family: var(--serif); color: var(--green); font-size: 30px; margin-bottom: 18px; }
+.feat-title { font-size: 104px; letter-spacing: -4px; line-height: 1.02; margin: 22px 0 0; }
+.feat-sub { margin-top: 30px; color: var(--muted); font-size: 27px; line-height: 1.55; max-width: 560px; }
+#rail { left: 170px; top: 820px; display: flex; gap: 18px; opacity: 0; }
+#rail .seg { width: 150px; }
+#rail .bar { height: 4px; background: #dfe5de; border-radius: 2px; overflow: hidden; }
+#rail .bar i { display: block; height: 100%; width: 0; background: var(--green); }
+#rail .lbl { margin-top: 12px; font-size: 15px; letter-spacing: 2.5px; color: #8a958d; font-weight: 700; }
+#rail .lbl.on { color: var(--green); }
+.ui { position: absolute; transform-origin: center center; }
+
+.card { border: 1px solid #e3e8e2; border-radius: 6px; background: #fff; box-shadow: 0 13px 40px rgb(31 50 38 / 8%); }
+.icon-circle { display: grid; place-items: center; width: 43px; height: 43px; border-radius: 50%; background: #edf3ed; color: #41684a; }
+.card h2 { margin: 17px 0 7px; font-family: var(--serif); font-size: 23px; font-weight: 400; letter-spacing: -0.4px; }
+.card p.m { margin: 0; color: #748077; font-size: 12px; line-height: 1.7; }
+.btn { width: 100%; min-height: 45px; border-radius: 4px; background: #244c3c; color: #fff; font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+.sm-eyebrow { margin: 0; color: #65776c; font-size: 8px; font-weight: 700; letter-spacing: 1.55px; }
+
+#vcard { width: 460px; padding: 34px; }
+#otp-label { margin-top: 20px; color: #45534a; font-size: 11px; font-weight: 600; }
+#otp { margin-top: 10px; min-height: 46px; border: 1px solid #65816e; border-radius: 4px; box-shadow: 0 0 0 3px rgb(101 129 110 / 12%);
+  font-size: 19px; letter-spacing: 7px; display: flex; align-items: center; justify-content: center; }
+#otp .caret { width: 1.5px; height: 22px; background: #244c3c; margin-left: -4px; }
+#vbtn { margin-top: 12px; }
+.privacy { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 17px; color: #849087; font-size: 9px; }
+#verified-pill { position: absolute; left: 34px; right: 34px; bottom: 28px; height: 54px; border-radius: 4px; border: 1px solid #dce9dc; background: #f5f9f3;
+  color: #43664a; display: flex; align-items: center; gap: 10px; padding: 0 14px; font-size: 13px; font-weight: 700; }
+
+#scard { width: 380px; padding: 16px; border-radius: 5px; }
+#scard h2 { margin: 7px 0 13px; font-size: 20px; }
+#canvas { position: relative; height: 115px; border: 1px solid #dfe5de; border-radius: 3px;
+  background: linear-gradient(to bottom, transparent 78%, #e4e9e3 79%, #e4e9e3 80%, transparent 81%), #fff; }
+#canvas svg { position: absolute; left: 20px; top: 4px; width: 300px; height: 100px; overflow: visible; }
+#consent { margin-top: 12px; padding: 13px; border: 1px solid #e2e7e1; border-radius: 5px; background: #fff;
+  display: flex; gap: 9px; color: #536157; font-size: 11px; line-height: 1.6; }
+#cbox { flex: none; width: 15px; height: 15px; margin-top: 2px; border: 1.5px solid #9aa79e; border-radius: 3px; display: grid; place-items: center; color: #fff; font-size: 11px; }
+#sbtn { margin-top: 12px; }
+.legal { margin: 10px 0 0; text-align: center; color: #8a948d; font-size: 9px; }
+
+#doc { width: 290px; min-height: 365px; padding: 19px 22px; background: #fff;
+  box-shadow: 0 18px 55px rgb(31 50 38 / 13%), 0 2px 7px rgb(31 50 38 / 5%); }
+.d-top { display: flex; align-items: center; justify-content: space-between; color: #8b948d; font-size: 6px; letter-spacing: 1.05px; }
+.d-top span:first-child { width: 18px; height: 2px; background: #466d52; }
+.d-kick { margin-top: 36px; color: #66816e; font-size: 7px; font-weight: 700; letter-spacing: 1.4px; }
+.d-h { margin: 9px 0; font-family: var(--serif); font-size: 27px; letter-spacing: -0.8px; line-height: 1.08; }
+.d-p { margin: 0; color: #89918b; font-size: 8px; }
+.d-lines { display: grid; gap: 7px; margin-top: 25px; }
+.d-lines i { display: block; height: 3px; background: #eef0ec; }
+.d-sig { display: flex; align-items: end; justify-content: space-between; margin-top: 18px; }
+.d-sig > div:first-child { display: grid; gap: 4px; width: 156px; }
+.d-sig svg { width: 140px; height: 47px; overflow: visible; }
+.d-rule { height: 1px; background: #d8ded8; }
+.d-cap { color: #a1a8a1; font-size: 5px; letter-spacing: 0.9px; }
+.d-ver { display: flex; align-items: center; gap: 4px; color: #52755d; font-size: 5px; font-weight: 700; line-height: 1.35; }
+#seal { display: flex; align-items: center; gap: 6px; margin-top: 21px; padding-top: 10px; border-top: 1px solid #edf0eb;
+  color: #244c3c; font-size: 6px; letter-spacing: 1px; font-weight: 700; }
+#stamp { position: absolute; right: 18px; top: 108px; width: 86px; height: 86px; border-radius: 50%; border: 2px solid rgb(36 76 60 / 70%);
+  display: grid; place-items: center; text-align: center; color: rgb(36 76 60 / 85%); font-size: 6.5px; font-weight: 700; letter-spacing: 1.2px; line-height: 1.5; }
+#stamp::before { content: ''; position: absolute; inset: 4px; border-radius: 50%; border: 1px dashed rgb(36 76 60 / 45%); }
+#status { display: flex; align-items: center; gap: 10px; min-width: 220px; padding: 12px; border: 1px solid #edf0ea; border-radius: 5px; background: #fff;
+  box-shadow: 0 9px 26px rgb(31 50 38 / 10%); }
+#status .ic, #status .ck { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--green-light); color: var(--green); }
+#status .ck { width: 19px; height: 19px; margin-left: auto; font-size: 11px; }
+#status strong, #status small { display: block; }
+#status strong { font-size: 9px; } #status small { margin-top: 4px; color: #858e87; font-size: 8px; }
+#vres { width: 300px; padding: 14px 16px; border: 1px solid #dce9dc; border-radius: 4px; background: #f5f9f3; color: #43664a;
+  box-shadow: 0 9px 26px rgb(31 50 38 / 8%); }
+#vres h3 { margin: 6px 0 4px; font-family: var(--serif); font-size: 18px; font-weight: 400; }
+#vres .k { color: #6f8a74; font-size: 7px; letter-spacing: 1px; font-weight: 700; margin-top: 8px; }
+#vres .hash { font-family: 'DejaVu Sans Mono', monospace; font-size: 7.5px; color: #2f4d37; word-break: break-all; line-height: 1.5; margin-top: 3px; min-height: 23px; }
+
+/* outro */
+#out-title { left: 0; right: 0; top: 330px; text-align: center; font-size: 104px; letter-spacing: -4px; }
+#out-brand { left: 0; right: 0; top: 520px; display: flex; justify-content: center; align-items: center; gap: 14px; }
+
+#out-brand span { font-family: var(--serif); font-weight: 700; font-size: 58px; letter-spacing: -3px; }
+#out-cta { left: 50%; top: 640px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 14px; height: 76px; padding: 0 34px;
+  border-radius: 6px; background: var(--green); color: #fff; font-size: 24px; font-weight: 600; white-space: nowrap; }
+#out-foot { left: 0; right: 0; top: 770px; text-align: center; color: #87918b; font-size: 20px; }
+
+#cursor { position: absolute; left: 0; top: 0; width: 34px; height: 34px; opacity: 0; z-index: 50; filter: drop-shadow(0 3px 5px rgb(0 0 0 / 22%)); }
+</style>
+</head>
+<body>
+<div class="orbit" id="orb1" style="width:900px;height:900px;margin:-450px 0 0 -450px"></div>
+<div class="orbit" id="orb2" style="width:720px;height:720px;margin:-360px 0 0 -360px;border-color:rgb(67 104 78 / 8%)"></div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <path id="sigpath" pathLength="1" d="M70,52 C100,36 132,40 122,66 C110,104 92,152 68,162 C46,172 34,150 56,136 C86,118 136,112 168,106
+      C178,90 194,86 198,102 C202,118 180,122 178,106 C176,92 206,86 222,102 C230,110 228,122 238,112 C248,96 258,80 262,96
+      C266,112 256,124 272,112 C284,100 292,98 296,108 C300,120 306,122 318,108
+      C340,84 372,52 356,46 C340,40 328,72 354,82 C328,88 316,118 348,120 C374,122 390,100 400,80 C410,52 414,40 406,46
+      C398,56 394,112 410,120 C420,124 426,100 436,76 C444,56 440,44 432,56 C424,72 424,116 440,120 C450,122 456,106 462,100
+      C464,112 468,120 478,114 C490,106 494,98 504,106 C514,116 498,124 488,120
+      M96,178 C210,162 390,152 572,140" />
+  </defs>
+</svg>
+
+<!-- 1 hook -->
+<section class="scene" id="s1">
+  <div class="abs serif" id="hook-title">
+    <div id="h1a">A signature is a promise.</div>
+    <div id="h1b">Make it <em>count.</em></div>
+  </div>
+  <div class="abs" id="sig-wrap">
+    <svg viewBox="0 0 600 200"><use href="#sigpath" id="sig1" fill="none" stroke="#2f5a43" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1"/></svg>
+    <div id="sig-rule"></div>
+    <div id="sig-cap"><span>SIGNED ELECTRONICALLY</span><b id="sig-ver">IDENTITY VERIFIED</b></div>
+  </div>
+</section>
+
+<!-- 2 reveal -->
+<section class="scene" id="s2">
+  <div class="abs" id="brand"><div class="mark big"></div><span>signet</span></div>
+  <p class="abs eyebrow" id="reveal-eyebrow"><span class="dot"></span>SIGNING, WITH THE DETAILS TAKEN CARE OF</p>
+  <div class="abs serif" id="reveal-line">Prepare, sign and seal important documents.</div>
+</section>
+
+<!-- 3 identity -->
+<section class="scene" id="s3">
+  <div class="feat-left" id="l3">
+    <p class="eyebrow">01 · IDENTITY CHECKS</p>
+    <h2 class="feat-title serif">Know who<br>signed.</h2>
+  </div>
+  <div class="ui" id="u3" style="left:1050px;top:300px;width:460px;height:400px">
+    <div class="card" id="vcard">
+      <span class="icon-circle"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
+      <h2>Verify your email to continue.</h2>
+      <p class="m">We will send a one-time code to the email address this invitation was sent to.</p>
+      <div id="otp-label">Six-digit verification code</div>
+      <div id="otp"><span id="otp-digits"></span><span class="caret" id="caret"></span></div>
+      <div class="btn" id="vbtn">Verify email</div>
+      <div class="privacy">Your code can only be used once and expires shortly.</div>
+      <div id="verified-pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Email verified · identity confirmed for this signing</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 consent -->
+<section class="scene" id="s4">
+  <div class="feat-left" id="l4">
+    <p class="eyebrow">02 · CLEAR CONSENT</p>
+    <h2 class="feat-title serif">Sign it,<br>and mean it.</h2>
+  </div>
+  <div class="ui" id="u4" style="left:1090px;top:270px;width:380px;height:420px">
+    <div class="card" id="scard">
+      <p class="sm-eyebrow">YOUR SIGNATURE</p>
+      <h2>Sign in the box.</h2>
+      <div id="canvas"><svg viewBox="0 0 600 200"><use href="#sigpath" id="sig2" fill="none" stroke="#17201d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1"/></svg></div>
+      <div id="consent"><span id="cbox">✓</span><span>I have read this document, agree to sign it electronically, and intend my electronic signature to be legally binding.</span></div>
+      <div class="btn" id="sbtn">Sign and complete</div>
+      <p class="legal">Your signature and consent are recorded with the document’s audit trail.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 record -->
+<section class="scene" id="s5">
+  <div class="feat-left" id="l5">
+    <p class="eyebrow">03 · SEALED CERTIFICATE</p>
+    <h2 class="feat-title serif">Keep a clear<br>record.</h2>
+  </div>
+  <div class="ui" id="u5doc" style="left:1010px;top:357px;width:290px;height:365px">
+    <div id="doc">
+      <div class="d-top"><span></span> PRIVATE AGREEMENT <span>04 / 04</span></div>
+      <div class="d-kick">AGREEMENT</div>
+      <div class="d-h">Made with<br>confidence.</div>
+      <p class="d-p">A clear agreement starts with a careful process.</p>
+      <div class="d-lines"><i></i><i></i><i></i><i></i><i style="width:68%"></i></div>
+      <div class="d-sig">
+        <div>
+          <svg viewBox="0 0 600 200"><use href="#sigpath" fill="none" stroke="#345b45" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="d-rule"></span><span class="d-cap">SIGNED ELECTRONICALLY</span>
+        </div>
+        <div class="d-ver"><span>IDENTITY<br>VERIFIED</span></div>
+      </div>
+      <div id="seal"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> DOCUMENT SEALED</div>
+      <div id="stamp">SEALED<br>TAMPER<br>EVIDENT</div>
+    </div>
+  </div>
+  <div class="ui" id="u5status" style="left:1380px;top:740px;width:250px;height:58px">
+    <div id="status"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/></svg></span>
+      <span><strong>All signatures collected</strong><small>Audit trail secured</small></span><span class="ck">✓</span></div>
+  </div>
+  <div class="ui" id="u5res" style="left:1440px;top:175px;width:300px;height:120px">
+    <div id="vres">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+      <h3>Seal verified.</h3>
+      <div class="k">DOCUMENT FINGERPRINT</div>
+      <div class="hash" id="hash"></div>
+    </div>
+  </div>
+</section>
+
+<div class="abs" id="rail">
+  <div class="seg"><div class="bar"><i id="b1"></i></div><div class="lbl" id="t1">IDENTITY</div></div>
+  <div class="seg"><div class="bar"><i id="b2"></i></div><div class="lbl" id="t2">CONSENT</div></div>
+  <div class="seg"><div class="bar"><i id="b3"></i></div><div class="lbl" id="t3">RECORD</div></div>
+</div>
+
+<!-- 6 outro -->
+<section class="scene" id="s6">
+  <div class="abs serif" id="out-title">From first page to <em>final proof.</em></div>
+  <div class="abs" id="out-brand"><div class="mark small"></div><span>signet</span></div>
+  <div class="abs" id="out-cta">Create your account <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
+  <div class="abs" id="out-foot">Careful signing for documents that matter.</div>
+</section>
+
+<svg id="cursor" viewBox="0 0 24 24"><path d="M4 2 L4 20 L9 15.5 L12.5 22.5 L15.5 21 L12 14 L19 14 Z" fill="#17201d" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const eo = (x) => 1 - Math.pow(1 - x, 3);
+const eio = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const back = (x) => { const c = 1.5; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const lerp = (a, b, p) => a + (b - a) * p;
+
+// in over `dur` starting at tin; out over 0.25s ending at tout. Returns visibility 0..1 and the in-progress.
+function vis(t, tin, tout, dur = 0.55) {
+  const pi = eo(prog(t, tin, tin + dur));
+  const po = tout == null ? 0 : eio(prog(t, tout - 0.28, tout));
+  return { pi, po, v: pi * (1 - po) };
+}
+function rise(el, t, tin, tout, dy = 34, dur = 0.55) {
+  const { pi, po, v } = vis(t, tin, tout, dur);
+  el.style.opacity = v;
+  el.style.transform = `translateY(${(1 - pi) * dy - po * dy * 0.6}px)`;
+}
+function sceneOn(id, t, a, b) { $(id).style.opacity = t >= a && t < b ? 1 : 0; }
+
+const UI = { u3: 1.75, u4: 1.62, u5doc: 1.78, u5status: 1.78, u5res: 1.65 };
+function card(id, t, tin, tout, fromX = 120) {
+  const { pi, po, v } = vis(t, tin, tout, 0.7);
+  const s = UI[id];
+  $(id).style.opacity = v;
+  $(id).style.transform = `translateX(${(1 - pi) * fromX - po * 80}px) scale(${s * (0.96 + 0.04 * pi)})`;
+}
+
+const sigTotal = (() => { const p = $('sigpath'); return p.getTotalLength(); })();
+const HASH = '9c1f4be27a06d83e5f12c7a4b9e03d6f71a25c88e4d9b03f6a17e2c5d40b98f3';
+
+function cursor(t, keys) {
+  // keys: [time, x, y, clickDown?]
+  const c = $('cursor');
+  if (!keys || t < keys[0][0] - 0.3 || t > keys[keys.length - 1][0] + 0.3) { c.style.opacity = 0; return; }
+  let x = keys[0][1], y = keys[0][2];
+  for (let i = 0; i < keys.length - 1; i++) {
+    const [ta, xa, ya] = keys[i], [tb, xb, yb] = keys[i + 1];
+    if (t >= ta && t <= tb) { const p = eio(prog(t, ta, tb)); x = lerp(xa, xb, p); y = lerp(ya, yb, p); }
+    if (t > tb) { x = xb; y = yb; }
+  }
+  const fade = Math.min(prog(t, keys[0][0] - 0.3, keys[0][0]), 1 - prog(t, keys[keys.length - 1][0], keys[keys.length - 1][0] + 0.3));
+  let s = 1;
+  for (const k of keys) if (k[3]) s = Math.min(s, 1 - 0.18 * Math.max(0, 1 - Math.abs(t - k[0]) / 0.12));
+  c.style.opacity = fade;
+  c.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+}
+
+window.seek = function (t) {
+  // background orbits drift slowly
+  $('orb1').style.transform = `rotate(${t * 3}deg) scale(${1 + 0.02 * Math.sin(t * 0.6)})`;
+  $('orb2').style.transform = `scale(${1 - 0.02 * Math.sin(t * 0.5)})`;
+  const orbOn = t < 4 || t >= 17.5 ? 1 : 0.5;
+  $('orb1').style.opacity = $('orb2').style.opacity = orbOn;
+
+  // 1 hook 0–4
+  sceneOn('s1', t, 0, 4);
+  if (t < 4) {
+    const draw = eio(prog(t, 0.1, 1.35));
+    $('sig1').style.strokeDashoffset = 1 - draw;
+    const mv = eio(prog(t, 1.25, 1.85));
+    const out = eio(prog(t, 3.72, 4.0));
+    const sw = $('sig-wrap');
+    sw.style.transform = `translateY(${mv * 230 + out * 20}px) scale(${1 - 0.22 * mv})`;
+    sw.style.opacity = 1 - out;
+    $('sig-ver').style.opacity = prog(t, 1.2, 1.5);
+    rise($('h1a'), t, 1.35, 4.0, 40);
+    rise($('h1b'), t, 1.9, 4.0, 40);
+  }
+
+  // 2 reveal 4–7
+  sceneOn('s2', t, 4, 7);
+  if (t >= 4 && t < 7) {
+    const b = $('brand');
+    const { pi, po } = vis(t, 4.0, 7.0, 0.7);
+    b.style.opacity = pi * (1 - po);
+    b.style.transform = `scale(${0.9 + 0.1 * back(prog(t, 4.0, 4.7))}) translateY(${-po * 20}px)`;
+    rise($('reveal-eyebrow'), t, 4.45, 7.0, 20);
+    rise($('reveal-line'), t, 4.7, 7.0, 30);
+  }
+
+  // 3–5 feature scenes with rail
+  const railV = vis(t, 7.0, 17.5, 0.5).v;
+  $('rail').style.opacity = railV;
+  $('b1').style.width = (prog(t, 7.0, 10.5) * 100) + '%';
+  $('b2').style.width = (prog(t, 10.5, 14.0) * 100) + '%';
+  $('b3').style.width = (prog(t, 14.0, 17.5) * 100) + '%';
+  $('t1').className = 'lbl' + (t >= 7 ? ' on' : '');
+  $('t2').className = 'lbl' + (t >= 10.5 ? ' on' : '');
+  $('t3').className = 'lbl' + (t >= 14 ? ' on' : '');
+
+  sceneOn('s3', t, 7, 10.5);
+  if (t >= 7 && t < 10.5) {
+    rise($('l3'), t, 7.05, 10.5, 40);
+    card('u3', t, 7.2, 10.5);
+    const code = '482916';
+    const n = Math.floor(clamp((t - 7.75) / 0.125, 0, 6));
+    $('otp-digits').textContent = code.slice(0, n);
+    $('caret').style.opacity = n < 6 && Math.floor(t * 2.5) % 2 === 0 ? 1 : 0;
+    const press = t > 8.95 && t < 9.25;
+    $('vbtn').textContent = t >= 9.0 && t < 9.25 ? 'Checking code…' : 'Verify email';
+    $('vbtn').style.background = press ? '#183b2c' : '#244c3c';
+    $('vbtn').style.opacity = 1;
+    const vp = eo(prog(t, 9.25, 9.65));
+    $('verified-pill').style.opacity = vp;
+    $('verified-pill').style.transform = `translateY(${(1 - vp) * 14}px)`;
+  }
+
+  // 4 consent 10.5–14
+  sceneOn('s4', t, 10.5, 14);
+  if (t >= 10.5 && t < 14) {
+    rise($('l4'), t, 10.55, 14.0, 40);
+    card('u4', t, 10.7, 14.0);
+    const d = eio(prog(t, 11.2, 12.4));
+    $('sig2').style.strokeDashoffset = 1 - d;
+    const ck = t >= 12.65;
+    $('cbox').style.background = ck ? '#244c3c' : '#fff';
+    $('cbox').style.borderColor = ck ? '#244c3c' : '#9aa79e';
+    $('cbox').style.color = ck ? '#fff' : 'transparent';
+    const busy = t >= 13.15;
+    $('sbtn').textContent = busy ? 'Recording your signature…' : 'Sign and complete';
+    $('sbtn').style.background = t > 13.08 && t < 13.3 ? '#183b2c' : '#244c3c';
+  }
+
+  // 5 record 14–17.5
+  sceneOn('s5', t, 14, 17.5);
+  if (t >= 14 && t < 17.5) {
+    rise($('l5'), t, 14.05, 17.5, 40);
+    const dv = vis(t, 14.15, 17.5, 0.7);
+    $('u5doc').style.opacity = dv.v;
+    $('u5doc').style.transform = `translateY(${(1 - dv.pi) * 60}px) rotate(${2 + (1 - dv.pi) * 4}deg) scale(${UI.u5doc})`;
+    const sp = prog(t, 14.95, 15.25);
+    $('stamp').style.opacity = sp > 0 ? 1 : 0;
+    $('stamp').style.transform = `rotate(-12deg) scale(${sp < 1 ? lerp(1.9, 1, eo(sp)) : 1})`;
+    $('seal').style.opacity = 0.35 + 0.65 * prog(t, 15.0, 15.2);
+    const st = vis(t, 15.5, 17.5, 0.55);
+    $('u5status').style.opacity = st.v;
+    $('u5status').style.transform = `translateX(${(1 - st.pi) * 80}px) scale(${UI.u5status})`;
+    const vr = vis(t, 16.0, 17.5, 0.5);
+    $('u5res').style.opacity = vr.v;
+    $('u5res').style.transform = `translateY(${(1 - vr.pi) * -30}px) scale(${UI.u5res})`;
+    $('hash').textContent = HASH.slice(0, Math.floor(prog(t, 16.15, 16.95) * 64));
+  }
+
+  // 6 outro 17.5–20
+  sceneOn('s6', t, 17.5, 21);
+  if (t >= 17.5) {
+    rise($('out-title'), t, 17.55, null, 40, 0.6);
+    rise($('out-brand'), t, 18.0, null, 20);
+    const c = vis(t, 18.3, null, 0.55);
+    $('out-cta').style.opacity = c.pi;
+    $('out-cta').style.transform = `translateX(-50%) translateY(${(1 - c.pi) * 24}px) scale(${t > 19.0 && t < 19.2 ? 0.97 : 1})`;
+    $('out-foot').style.opacity = eo(prog(t, 18.6, 19.1));
+  }
+
+  cursor(t, t < 10.5
+    ? [[8.45, 1520, 860], [8.95, 1290, 760, true], [9.4, 1330, 820]]
+    : t < 14 ? [[12.35, 1520, 600], [12.65, 1145, 690, true], [13.1, 1300, 820, true], [13.6, 1360, 860]]
+    : t >= 17.5 ? [[18.75, 1150, 830], [19.1, 1000, 690, true], [19.75, 1010, 700]] : null);
+};
+const pre = new Image(); pre.src = 'logo.png';
+window.ready = Promise.all([document.fonts.ready, ...[...document.images, pre].map((i) => i.complete ? 1 : new Promise((r) => (i.onload = i.onerror = r)))]);
+seek(0);
+</script>
+</body>
+</html>

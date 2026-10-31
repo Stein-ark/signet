@@ -1,0 +1,3 @@
+Anyone can put a name on a line. Signet proves who signed it: email-verified signers, consent recorded word for word, documents encrypted before they touch storage, and a sealed PDF with a tamper-evident audit certificate anyone can verify.
+
+From first page to final proof.

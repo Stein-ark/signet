@@ -1,0 +1,549 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+:root {
+  --ink: #17201d; --muted: #68736d; --paper: #f8f8f4; --green: #244c3c;
+  --green-light: #e5eee8; --line: #e2e5df;
+  --serif: Georgia, 'Noto Serif Display', 'Noto Serif', 'Times New Roman', serif;
+  --sans: Arial, 'Liberation Sans', Helvetica, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+body {
+  background: radial-gradient(ellipse at 72% 48%, rgb(227 235 226 / 70%), transparent 48%), var(--paper);
+  color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased;
+}
+.abs { position: absolute; }
+.scene { position: absolute; inset: 0; opacity: 0; }
+.orbit { position: absolute; border: 1.5px solid rgb(67 104 78 / 10%); border-radius: 50%; left: 50%; top: 50%; }
+.eyebrow { margin: 0; color: #65776c; font-size: 17px; font-weight: 700; letter-spacing: 3px; display: flex; align-items: center; gap: 14px; }
+.eyebrow .dot { width: 11px; height: 11px; border-radius: 50%; background: #71917c; }
+.serif { font-family: var(--serif); font-weight: 400; }
+em { color: var(--green); }
+
+/* hook */
+#hook-title { left: 0; right: 0; top: 250px; text-align: center; font-size: 118px; letter-spacing: -4px; line-height: 1.08; }
+#hook-title div { will-change: transform, opacity; }
+#sig-wrap { left: 560px; top: 330px; width: 800px; }
+#sig-wrap svg { display: block; width: 800px; height: 267px; overflow: visible; }
+#sig-rule { height: 2px; background: #d8ded8; margin-top: -30px; }
+#sig-cap { margin-top: 14px; color: #a1a8a1; font-size: 15px; letter-spacing: 3px; display: flex; justify-content: space-between; }
+#sig-cap b { color: #52755d; }
+
+/* reveal */
+#brand { left: 0; right: 0; top: 330px; display: flex; justify-content: center; align-items: center; gap: 26px; }
+.mark { background: url(logo.png) no-repeat; mix-blend-mode: multiply; }
+.mark.big { width: 110px; height: 100px; background-size: 344px auto; background-position: -119px -44px; }
+.mark.small { width: 55px; height: 50px; background-size: 172px auto; background-position: -60px -22px; }
+#brand span { font-family: var(--serif); font-weight: 700; font-size: 150px; letter-spacing: -9px; }
+#reveal-eyebrow { left: 0; right: 0; top: 560px; justify-content: center; }
+#reveal-line { left: 0; right: 0; top: 615px; text-align: center; font-size: 58px; letter-spacing: -1.5px; color: #2b3632; }
+
+/* feature scenes */
+.feat-left { position: absolute; left: 170px; top: 0; bottom: 0; width: 700px; display: flex; flex-direction: column; justify-content: center; }
+.feat-num { font-family: var(--serif); color: var(--green); font-size: 30px; margin-bottom: 18px; }
+.feat-title { font-size: 104px; letter-spacing: -4px; line-height: 1.02; margin: 22px 0 0; }
+.feat-sub { margin-top: 30px; color: var(--muted); font-size: 27px; line-height: 1.55; max-width: 560px; }
+#rail { left: 170px; top: 820px; display: flex; gap: 18px; opacity: 0; }
+#rail .seg { width: 124px; }
+#rail .bar { height: 4px; background: #dfe5de; border-radius: 2px; overflow: hidden; }
+#rail .bar i { display: block; height: 100%; width: 0; background: var(--green); }
+#rail .lbl { margin-top: 12px; font-size: 15px; letter-spacing: 2.5px; color: #8a958d; font-weight: 700; }
+#rail .lbl.on { color: var(--green); }
+.ui { position: absolute; transform-origin: center center; }
+
+.card { border: 1px solid #e3e8e2; border-radius: 6px; background: #fff; box-shadow: 0 13px 40px rgb(31 50 38 / 8%); }
+.icon-circle { display: grid; place-items: center; width: 43px; height: 43px; border-radius: 50%; background: #edf3ed; color: #41684a; }
+.card h2 { margin: 17px 0 7px; font-family: var(--serif); font-size: 23px; font-weight: 400; letter-spacing: -0.4px; }
+.card p.m { margin: 0; color: #748077; font-size: 12px; line-height: 1.7; }
+.btn { width: 100%; min-height: 45px; border-radius: 4px; background: #244c3c; color: #fff; font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+.sm-eyebrow { margin: 0; color: #65776c; font-size: 8px; font-weight: 700; letter-spacing: 1.55px; }
+
+#vcard { width: 460px; padding: 34px; }
+#otp-label { margin-top: 20px; color: #45534a; font-size: 11px; font-weight: 600; }
+#otp { margin-top: 10px; min-height: 46px; border: 1px solid #65816e; border-radius: 4px; box-shadow: 0 0 0 3px rgb(101 129 110 / 12%);
+  font-size: 19px; letter-spacing: 7px; display: flex; align-items: center; justify-content: center; }
+#otp .caret { width: 1.5px; height: 22px; background: #244c3c; margin-left: -4px; }
+#vbtn { margin-top: 12px; }
+.privacy { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 17px; color: #849087; font-size: 9px; }
+#verified-pill { position: absolute; left: 34px; right: 34px; bottom: 28px; height: 54px; border-radius: 4px; border: 1px solid #dce9dc; background: #f5f9f3;
+  color: #43664a; display: flex; align-items: center; gap: 10px; padding: 0 14px; font-size: 13px; font-weight: 700; }
+
+#scard { width: 380px; padding: 16px; border-radius: 5px; }
+#scard h2 { margin: 7px 0 13px; font-size: 20px; }
+#canvas { position: relative; height: 115px; border: 1px solid #dfe5de; border-radius: 3px;
+  background: linear-gradient(to bottom, transparent 78%, #e4e9e3 79%, #e4e9e3 80%, transparent 81%), #fff; }
+#canvas svg { position: absolute; left: 20px; top: 4px; width: 300px; height: 100px; overflow: visible; }
+#consent { margin-top: 12px; padding: 13px; border: 1px solid #e2e7e1; border-radius: 5px; background: #fff;
+  display: flex; gap: 9px; color: #536157; font-size: 11px; line-height: 1.6; }
+#cbox { flex: none; width: 15px; height: 15px; margin-top: 2px; border: 1.5px solid #9aa79e; border-radius: 3px; display: grid; place-items: center; color: #fff; font-size: 11px; }
+#sbtn { margin-top: 12px; }
+.legal { margin: 10px 0 0; text-align: center; color: #8a948d; font-size: 9px; }
+
+#doc { width: 290px; min-height: 365px; padding: 19px 22px; background: #fff;
+  box-shadow: 0 18px 55px rgb(31 50 38 / 13%), 0 2px 7px rgb(31 50 38 / 5%); }
+.d-top { display: flex; align-items: center; justify-content: space-between; color: #8b948d; font-size: 6px; letter-spacing: 1.05px; }
+.d-top span:first-child { width: 18px; height: 2px; background: #466d52; }
+.d-kick { margin-top: 36px; color: #66816e; font-size: 7px; font-weight: 700; letter-spacing: 1.4px; }
+.d-h { margin: 9px 0; font-family: var(--serif); font-size: 27px; letter-spacing: -0.8px; line-height: 1.08; }
+.d-p { margin: 0; color: #89918b; font-size: 8px; }
+.d-lines { display: grid; gap: 7px; margin-top: 25px; }
+.d-lines i { display: block; height: 3px; background: #eef0ec; }
+.d-sig { display: flex; align-items: end; justify-content: space-between; margin-top: 18px; }
+.d-sig > div:first-child { display: grid; gap: 4px; width: 156px; }
+.d-sig svg { width: 140px; height: 47px; overflow: visible; }
+.d-rule { height: 1px; background: #d8ded8; }
+.d-cap { color: #a1a8a1; font-size: 5px; letter-spacing: 0.9px; }
+.d-ver { display: flex; align-items: center; gap: 4px; color: #52755d; font-size: 5px; font-weight: 700; line-height: 1.35; }
+#seal { display: flex; align-items: center; gap: 6px; margin-top: 21px; padding-top: 10px; border-top: 1px solid #edf0eb;
+  color: #244c3c; font-size: 6px; letter-spacing: 1px; font-weight: 700; }
+#stamp { position: absolute; right: 18px; top: 108px; width: 86px; height: 86px; border-radius: 50%; border: 2px solid rgb(36 76 60 / 70%);
+  display: grid; place-items: center; text-align: center; color: rgb(36 76 60 / 85%); font-size: 6.5px; font-weight: 700; letter-spacing: 1.2px; line-height: 1.5; }
+#stamp::before { content: ''; position: absolute; inset: 4px; border-radius: 50%; border: 1px dashed rgb(36 76 60 / 45%); }
+#status { display: flex; align-items: center; gap: 10px; min-width: 220px; padding: 12px; border: 1px solid #edf0ea; border-radius: 5px; background: #fff;
+  box-shadow: 0 9px 26px rgb(31 50 38 / 10%); }
+#status .ic, #status .ck { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--green-light); color: var(--green); }
+#status .ck { width: 19px; height: 19px; margin-left: auto; font-size: 11px; }
+#status strong, #status small { display: block; }
+#status strong { font-size: 9px; } #status small { margin-top: 4px; color: #858e87; font-size: 8px; }
+#vres { width: 300px; padding: 14px 16px; border: 1px solid #dce9dc; border-radius: 4px; background: #f5f9f3; color: #43664a;
+  box-shadow: 0 9px 26px rgb(31 50 38 / 8%); }
+#vres h3 { margin: 6px 0 4px; font-family: var(--serif); font-size: 18px; font-weight: 400; }
+#vres .k { color: #6f8a74; font-size: 7px; letter-spacing: 1px; font-weight: 700; margin-top: 8px; }
+#vres .hash { font-family: 'DejaVu Sans Mono', monospace; font-size: 7.5px; color: #2f4d37; word-break: break-all; line-height: 1.5; margin-top: 3px; min-height: 23px; }
+
+/* outro */
+#out-title { left: 0; right: 0; top: 330px; text-align: center; font-size: 104px; letter-spacing: -4px; }
+#out-brand { left: 0; right: 0; top: 520px; display: flex; justify-content: center; align-items: center; gap: 14px; }
+
+#out-brand span { font-family: var(--serif); font-weight: 700; font-size: 58px; letter-spacing: -3px; }
+#out-cta { left: 50%; top: 640px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 14px; height: 76px; padding: 0 34px;
+  border-radius: 6px; background: var(--green); color: #fff; font-size: 24px; font-weight: 600; white-space: nowrap; }
+#out-foot { left: 0; right: 0; top: 770px; text-align: center; color: #87918b; font-size: 20px; }
+
+#cursor { position: absolute; left: 0; top: 0; width: 34px; height: 34px; opacity: 0; z-index: 50; filter: drop-shadow(0 3px 5px rgb(0 0 0 / 22%)); }
+
+/* privacy */
+#page { width: 300px; height: 380px; padding: 22px 24px; background: #fff; position: relative; overflow: hidden;
+  box-shadow: 0 18px 55px rgb(31 50 38 / 13%), 0 2px 7px rgb(31 50 38 / 5%); }
+#page .fname { display: flex; justify-content: space-between; color: #8b948d; font-size: 6.5px; letter-spacing: 1px; }
+.row { position: relative; height: 15px; margin-top: 9px; }
+.row .plain, .row .hex { position: absolute; inset: 0; display: flex; align-items: center; }
+.row .plain i { display: block; height: 3px; background: #e6eae4; width: 100%; }
+.row.h .plain { font-family: var(--serif); font-size: 19px; color: var(--ink); white-space: nowrap; }
+.row .hex { font-family: 'DejaVu Sans Mono', monospace; font-size: 7.6px; color: #4d7a5c; letter-spacing: 0.4px; white-space: nowrap; overflow: hidden; }
+#lock { position: absolute; left: 50%; top: 50%; width: 92px; height: 92px; margin: -46px 0 0 -46px; border-radius: 50%;
+  background: var(--green); color: #fff; display: grid; place-items: center; box-shadow: 0 10px 30px rgb(36 76 60 / 35%), 0 0 0 8px rgb(36 76 60 / 12%); }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 11px; border-radius: 20px; background: #fff; border: 1px solid #dfe6df;
+  color: #3d5c47; font-size: 9px; font-weight: 700; letter-spacing: 0.6px; box-shadow: 0 6px 18px rgb(31 50 38 / 8%); white-space: nowrap; }
+.chip b { width: 6px; height: 6px; border-radius: 50%; background: #71917c; }
+
+/* certificate */
+#cert { width: 290px; padding: 14px 16px; background: #fff; border: 1px solid #e6ebe5; border-radius: 3px; box-shadow: 0 12px 30px rgb(31 50 38 / 12%); }
+#cert .ct { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; }
+#cert .cs { margin-top: 3px; color: #858e87; font-size: 7px; }
+#cert .sec { margin-top: 10px; color: #244c3c; font-size: 6.5px; font-weight: 700; letter-spacing: 1px; }
+#cert dl { margin: 6px 0 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 7px; }
+#cert dt { color: #858e87; } #cert dd { margin: 0; color: #17201d; font-weight: 600; }
+#cert .hash { font-family: 'DejaVu Sans Mono', monospace; font-size: 7px; color: #2f4d37; word-break: break-all; line-height: 1.5; margin-top: 3px; min-height: 21px; }
+
+/* verify page */
+#vpanel { width: 600px; padding: 32px 35px; }
+#vpanel .icon-circle { margin-bottom: 16px; }
+#vpanel h1 { margin: 8px 0; font-family: var(--serif); font-size: 32px; font-weight: 400; letter-spacing: -0.8px; }
+#vpanel .intro { margin: 0 0 18px; color: #748077; font-size: 12px; line-height: 1.7; }
+#vlabel { color: #4e5d53; font-size: 11px; font-weight: 600; }
+#vinput { margin-top: 9px; min-height: 43px; padding: 0 11px; border: 1px solid #65816e; border-radius: 4px; box-shadow: 0 0 0 3px rgb(101 129 110 / 12%);
+  display: flex; align-items: center; font-family: 'DejaVu Sans Mono', monospace; font-size: 10px; color: #17201d; white-space: nowrap; overflow: hidden; }
+#vinput .ph { color: #9aa49d; font-family: var(--sans); font-size: 11px; }
+#vgo { margin-top: 9px; }
+#vresult { margin-top: 16px; padding: 15px 17px; border: 1px solid #dce9dc; border-radius: 4px; background: #f5f9f3; color: #43664a; }
+#vresult h2 { margin: 7px 0 4px; font-family: var(--serif); font-size: 20px; font-weight: 400; }
+#vresult p { margin: 0; font-size: 11px; color: #5b7a62; }
+#vresult ul { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 5px; font-size: 11px; color: #2f4d37; }
+#vresult li { display: flex; align-items: center; gap: 7px; }
+#vresult li::before { content: '✓'; display: grid; place-items: center; width: 14px; height: 14px; border-radius: 50%; background: #244c3c; color: #fff; font-size: 8px; }
+</style>
+</head>
+<body>
+<div class="orbit" id="orb1" style="width:900px;height:900px;margin:-450px 0 0 -450px"></div>
+<div class="orbit" id="orb2" style="width:720px;height:720px;margin:-360px 0 0 -360px;border-color:rgb(67 104 78 / 8%)"></div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <path id="sigpath" pathLength="1" d="M70,52 C100,36 132,40 122,66 C110,104 92,152 68,162 C46,172 34,150 56,136 C86,118 136,112 168,106
+      C178,90 194,86 198,102 C202,118 180,122 178,106 C176,92 206,86 222,102 C230,110 228,122 238,112 C248,96 258,80 262,96
+      C266,112 256,124 272,112 C284,100 292,98 296,108 C300,120 306,122 318,108
+      C340,84 372,52 356,46 C340,40 328,72 354,82 C328,88 316,118 348,120 C374,122 390,100 400,80 C410,52 414,40 406,46
+      C398,56 394,112 410,120 C420,124 426,100 436,76 C444,56 440,44 432,56 C424,72 424,116 440,120 C450,122 456,106 462,100
+      C464,112 468,120 478,114 C490,106 494,98 504,106 C514,116 498,124 488,120
+      M96,178 C210,162 390,152 572,140" />
+  </defs>
+</svg>
+
+<!-- 1 hook -->
+<section class="scene" id="s1">
+  <div class="abs serif" id="hook-title">
+    <div id="h1a">A signature is a promise.</div>
+    <div id="h1b">Make it <em>count.</em></div>
+  </div>
+  <div class="abs" id="sig-wrap">
+    <svg viewBox="0 0 600 200"><use href="#sigpath" id="sig1" fill="none" stroke="#2f5a43" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1"/></svg>
+    <div id="sig-rule"></div>
+    <div id="sig-cap"><span>SIGNED ELECTRONICALLY</span><b id="sig-ver">IDENTITY VERIFIED</b></div>
+  </div>
+</section>
+
+<!-- 2 reveal -->
+<section class="scene" id="s2">
+  <div class="abs" id="brand"><div class="mark big"></div><span>signet</span></div>
+  <p class="abs eyebrow" id="reveal-eyebrow"><span class="dot"></span>SIGNING, WITH THE DETAILS TAKEN CARE OF</p>
+  <div class="abs serif" id="reveal-line">Prepare, sign and seal important documents.</div>
+</section>
+
+<!-- 3 identity -->
+<section class="scene" id="s3">
+  <div class="feat-left" id="l3">
+    <p class="eyebrow">01 · IDENTITY CHECKS</p>
+    <h2 class="feat-title serif">Know who<br>signed.</h2>
+  </div>
+  <div class="ui" id="u3" style="left:1050px;top:300px;width:460px;height:400px">
+    <div class="card" id="vcard">
+      <span class="icon-circle"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
+      <h2>Verify your email to continue.</h2>
+      <p class="m">We will send a one-time code to the email address this invitation was sent to.</p>
+      <div id="otp-label">Six-digit verification code</div>
+      <div id="otp"><span id="otp-digits"></span><span class="caret" id="caret"></span></div>
+      <div class="btn" id="vbtn">Verify email</div>
+      <div class="privacy">Your code can only be used once and expires shortly.</div>
+      <div id="verified-pill"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Email verified · identity confirmed for this signing</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 consent -->
+<section class="scene" id="s4">
+  <div class="feat-left" id="l4">
+    <p class="eyebrow">02 · CLEAR CONSENT</p>
+    <h2 class="feat-title serif">Sign it,<br>and mean it.</h2>
+  </div>
+  <div class="ui" id="u4" style="left:1090px;top:270px;width:380px;height:420px">
+    <div class="card" id="scard">
+      <p class="sm-eyebrow">YOUR SIGNATURE</p>
+      <h2>Sign in the box.</h2>
+      <div id="canvas"><svg viewBox="0 0 600 200"><use href="#sigpath" id="sig2" fill="none" stroke="#17201d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1"/></svg></div>
+      <div id="consent"><span id="cbox">✓</span><span>I have read this document, agree to sign it electronically, and intend my electronic signature to be legally binding.</span></div>
+      <div class="btn" id="sbtn">Sign and complete</div>
+      <p class="legal">Your signature and consent are recorded with the document’s audit trail.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- privacy -->
+<section class="scene" id="sPriv">
+  <div class="feat-left" id="lPriv">
+    <p class="eyebrow">03 · ENCRYPTED STORAGE</p>
+    <h2 class="feat-title serif">Keep documents<br>private.</h2>
+  </div>
+  <div class="ui" id="uPage" style="left:1110px;top:350px;width:300px;height:380px">
+    <div id="page">
+      <div class="fname"><span>SERVICES-AGREEMENT.PDF</span><span>1 / 4</span></div>
+      <div id="rows"></div>
+      <div id="lock"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+    </div>
+  </div>
+  <div class="ui" id="uChip1" style="left:1440px;top:250px;width:210px;height:30px"><span class="chip"><b></b>AES-256-GCM · fresh key per file</span></div>
+  <div class="ui" id="uChip2" style="left:1440px;top:830px;width:210px;height:30px"><span class="chip"><b></b>Encrypted before local or cloud storage</span></div>
+</section>
+
+<!-- record -->
+<section class="scene" id="sRec">
+  <div class="feat-left" id="l5">
+    <p class="eyebrow">04 · SEALED CERTIFICATE</p>
+    <h2 class="feat-title serif">Keep a clear<br>record.</h2>
+  </div>
+  <div class="ui" id="u5doc" style="left:1010px;top:357px;width:290px;height:365px">
+    <div id="doc">
+      <div class="d-top"><span></span> PRIVATE AGREEMENT <span>04 / 04</span></div>
+      <div class="d-kick">AGREEMENT</div>
+      <div class="d-h">Made with<br>confidence.</div>
+      <p class="d-p">A clear agreement starts with a careful process.</p>
+      <div class="d-lines"><i></i><i></i><i></i><i></i><i style="width:68%"></i></div>
+      <div class="d-sig">
+        <div>
+          <svg viewBox="0 0 600 200"><use href="#sigpath" fill="none" stroke="#345b45" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="d-rule"></span><span class="d-cap">SIGNED ELECTRONICALLY</span>
+        </div>
+        <div class="d-ver"><span>IDENTITY<br>VERIFIED</span></div>
+      </div>
+      <div id="seal"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> DOCUMENT SEALED</div>
+      <div id="stamp">SEALED<br>TAMPER<br>EVIDENT</div>
+    </div>
+  </div>
+  <div class="ui" id="u5status" style="left:1380px;top:740px;width:250px;height:58px">
+    <div id="status"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/></svg></span>
+      <span><strong>All signatures collected</strong><small>Audit trail secured</small></span><span class="ck">✓</span></div>
+  </div>
+  <div class="ui" id="u5res" style="left:1395px;top:160px;width:290px;height:170px">
+    <div id="cert">
+      <div class="ct">SIGNING CERTIFICATE</div>
+      <div class="cs">Services Agreement · version 1</div>
+      <div class="sec">SIGNER</div>
+      <dl><dt>Identity verified by passcode</dt><dd>24 Oct 2026, 14:02</dd><dt>Signed at</dt><dd>24 Oct 2026, 14:03</dd><dt>Signature captured as</dt><dd>drawn</dd></dl>
+      <div class="sec">AUDIT CHAIN HEAD</div>
+      <div class="hash" id="hash"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- verify -->
+<section class="scene" id="sVer">
+  <div class="feat-left" id="lVer">
+    <p class="eyebrow">05 · PUBLIC DOCUMENT CHECK</p>
+    <h2 class="feat-title serif">Independent<br>checks.</h2>
+  </div>
+  <div class="ui" id="uVer" style="left:1000px;top:250px;width:600px;height:580px">
+    <div class="card" id="vpanel">
+      <span class="icon-circle"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
+      <p class="sm-eyebrow">PUBLIC DOCUMENT CHECK</p>
+      <h1>Verify a sealed agreement.</h1>
+      <p class="intro">Signet checks the manifest and issuer signature without revealing signer contact details.</p>
+      <div id="vlabel">Sealed document fingerprint or certificate manifest digest</div>
+      <div id="vinput"><span class="ph" id="vph">64-character SHA-256 value</span><span id="vval"></span></div>
+      <div class="btn" id="vgo">Verify document</div>
+      <div id="vresult">
+        <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        <h2>Seal verified.</h2>
+        <p>The certificate signature and manifest match Signet’s recorded seal.</p>
+        <ul><li id="ck1">Manifest digest: valid</li><li id="ck2">Issuer signature: valid</li><li id="ck3">Stored document record: valid</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="abs" id="rail">
+  <div class="seg"><div class="bar"><i id="b1"></i></div><div class="lbl" id="t1">IDENTITY</div></div>
+  <div class="seg"><div class="bar"><i id="b2"></i></div><div class="lbl" id="t2">CONSENT</div></div>
+  <div class="seg"><div class="bar"><i id="b3"></i></div><div class="lbl" id="t3">PRIVACY</div></div>
+  <div class="seg"><div class="bar"><i id="b4"></i></div><div class="lbl" id="t4">RECORD</div></div>
+  <div class="seg"><div class="bar"><i id="b5"></i></div><div class="lbl" id="t5">VERIFY</div></div>
+</div>
+
+<!-- 6 outro -->
+<section class="scene" id="s6">
+  <div class="abs serif" id="out-title">From first page to <em>final proof.</em></div>
+  <div class="abs" id="out-brand"><div class="mark small"></div><span>signet</span></div>
+  <div class="abs" id="out-cta">Create your account <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
+  <div class="abs" id="out-foot">Careful signing for documents that matter.</div>
+</section>
+
+<svg id="cursor" viewBox="0 0 24 24"><path d="M4 2 L4 20 L9 15.5 L12.5 22.5 L15.5 21 L12 14 L19 14 Z" fill="#17201d" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const eo = (x) => 1 - Math.pow(1 - x, 3);
+const eio = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const back = (x) => { const c = 1.5; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const lerp = (a, b, p) => a + (b - a) * p;
+
+// Scene cuts, all on the 120 BPM beat grid (0.5s).
+const CUT = { reveal: 4, id: 8, consent: 14.5, priv: 20, rec: 25, ver: 31, out: 35.5, end: 40 };
+
+// in over `dur` starting at tin; out over 0.28s ending at tout.
+function vis(t, tin, tout, dur = 0.55) {
+  const pi = eo(prog(t, tin, tin + dur));
+  const po = tout == null ? 0 : eio(prog(t, tout - 0.28, tout));
+  return { pi, po, v: pi * (1 - po) };
+}
+function rise(el, t, tin, tout, dy = 34, dur = 0.55) {
+  const { pi, po, v } = vis(t, tin, tout, dur);
+  el.style.opacity = v;
+  el.style.transform = `translateY(${(1 - pi) * dy - po * dy * 0.6}px)`;
+}
+function sceneOn(id, t, a, b) { const on = t >= a && t < b; $(id).style.opacity = on ? 1 : 0; return on; }
+
+const UI = { u3: 1.75, u4: 1.62, uPage: 1.7, uChip1: 1.7, uChip2: 1.7, u5doc: 1.78, u5status: 1.78, u5res: 1.6, uVer: 1.3 };
+function card(id, t, tin, tout, fromX = 120) {
+  const { pi, po, v } = vis(t, tin, tout, 0.7);
+  $(id).style.opacity = v;
+  $(id).style.transform = `translateX(${(1 - pi) * fromX - po * 80}px) scale(${UI[id] * (0.96 + 0.04 * pi)})`;
+}
+
+const SEAL_HASH = '9c1f4be27a06d83e5f12c7a4b9e03d6f71a25c88e4d9b03f6a17e2c5d40b98f3';
+const CHAIN_HASH = '3e7a90c15bd24f68a0e1c947d2b56f03a8e4719c6d20b5f83a9c7e14d6b02f5a';
+
+// privacy page rows: heading + body lines, each with a deterministic ciphertext twin
+const ROWS = [['h', 'Services Agreement'], ['b', 1], ['b', 1], ['b', 0.86], ['b', 1], ['b', 0.62], ['h2', ''], ['b', 1], ['b', 0.94], ['b', 1], ['b', 0.7], ['b', 0.5]];
+(() => {
+  let x = 0x5eed;
+  const hex = (n) => Array.from({ length: n }, () => ((x = (x * 1103515245 + 12345) & 0x7fffffff) % 16).toString(16)).join('');
+  $('rows').innerHTML = ROWS.map(([k, v]) => k === 'h'
+    ? `<div class="row h"><span class="plain">${v}</span><span class="hex">${hex(46)}</span></div>`
+    : k === 'h2' ? '<div class="row"></div>'
+    : `<div class="row"><span class="plain"><i style="width:${v * 100}%"></i></span><span class="hex">${hex(46)}</span></div>`).join('');
+})();
+
+function cursor(t, keys) {
+  // keys: [time, x, y, click?]
+  const c = $('cursor');
+  if (!keys || t < keys[0][0] - 0.3 || t > keys[keys.length - 1][0] + 0.3) { c.style.opacity = 0; return; }
+  let x = keys[0][1], y = keys[0][2];
+  for (let i = 0; i < keys.length - 1; i++) {
+    const [ta, xa, ya] = keys[i], [tb, xb, yb] = keys[i + 1];
+    if (t >= ta && t <= tb) { const p = eio(prog(t, ta, tb)); x = lerp(xa, xb, p); y = lerp(ya, yb, p); }
+    if (t > tb) { x = xb; y = yb; }
+  }
+  const fade = Math.min(prog(t, keys[0][0] - 0.3, keys[0][0]), 1 - prog(t, keys[keys.length - 1][0], keys[keys.length - 1][0] + 0.3));
+  let s = 1;
+  for (const k of keys) if (k[3]) s = Math.min(s, 1 - 0.18 * Math.max(0, 1 - Math.abs(t - k[0]) / 0.12));
+  c.style.opacity = fade;
+  c.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+}
+
+window.seek = function (t) {
+  $('orb1').style.transform = `rotate(${t * 3}deg) scale(${1 + 0.02 * Math.sin(t * 0.6)})`;
+  $('orb2').style.transform = `scale(${1 - 0.02 * Math.sin(t * 0.5)})`;
+  $('orb1').style.opacity = $('orb2').style.opacity = t < CUT.id || t >= CUT.out ? 1 : 0.5;
+
+  // hook
+  if (sceneOn('s1', t, 0, CUT.reveal)) {
+    $('sig1').style.strokeDashoffset = 1 - eio(prog(t, 0.1, 1.35));
+    const mv = eio(prog(t, 1.25, 1.85)), out = eio(prog(t, 3.72, 4.0));
+    $('sig-wrap').style.transform = `translateY(${mv * 230 + out * 20}px) scale(${1 - 0.22 * mv})`;
+    $('sig-wrap').style.opacity = 1 - out;
+    $('sig-ver').style.opacity = prog(t, 1.2, 1.5);
+    rise($('h1a'), t, 1.35, 4.0, 40);
+    rise($('h1b'), t, 1.9, 4.0, 40);
+  }
+
+  // reveal
+  if (sceneOn('s2', t, CUT.reveal, CUT.id)) {
+    const { pi, po } = vis(t, 4.0, CUT.id, 0.7);
+    $('brand').style.opacity = pi * (1 - po);
+    $('brand').style.transform = `scale(${0.9 + 0.1 * back(prog(t, 4.0, 4.7))}) translateY(${-po * 20}px)`;
+    rise($('reveal-eyebrow'), t, 4.5, CUT.id, 20);
+    rise($('reveal-line'), t, 5.0, CUT.id, 30);
+  }
+
+  // progress rail across the five feature scenes
+  const spans = [[CUT.id, CUT.consent], [CUT.consent, CUT.priv], [CUT.priv, CUT.rec], [CUT.rec, CUT.ver], [CUT.ver, CUT.out]];
+  $('rail').style.opacity = vis(t, CUT.id, CUT.out, 0.5).v;
+  spans.forEach(([a, b], k) => {
+    $('b' + (k + 1)).style.width = prog(t, a, b) * 100 + '%';
+    $('t' + (k + 1)).className = 'lbl' + (t >= a ? ' on' : '');
+  });
+
+  // 01 identity
+  if (sceneOn('s3', t, CUT.id, CUT.consent)) {
+    rise($('l3'), t, 8.05, CUT.consent, 40);
+    card('u3', t, 8.2, CUT.consent);
+    const n = Math.floor(clamp((t - 9.875) / 0.125, 0, 6)); // beat-grid: digits on 16ths from 10.0s
+    $('otp-digits').textContent = '482916'.slice(0, n);
+    $('caret').style.opacity = n < 6 && Math.floor(t * 2.5) % 2 === 0 ? 1 : 0;
+    $('vbtn').textContent = t >= 11.5 && t < 11.75 ? 'Checking code…' : 'Verify email';
+    $('vbtn').style.background = t > 11.45 && t < 11.75 ? '#183b2c' : '#244c3c';
+    const vp = eo(prog(t, 11.75, 12.15));
+    $('verified-pill').style.opacity = vp;
+    $('verified-pill').style.transform = `translateY(${(1 - vp) * 14}px)`;
+  }
+
+  // 02 consent
+  if (sceneOn('s4', t, CUT.consent, CUT.priv)) {
+    rise($('l4'), t, 14.55, CUT.priv, 40);
+    card('u4', t, 14.7, CUT.priv);
+    $('sig2').style.strokeDashoffset = 1 - eio(prog(t, 15.25, 16.75));
+    const ck = t >= 17.25;
+    $('cbox').style.background = ck ? '#244c3c' : '#fff';
+    $('cbox').style.borderColor = ck ? '#244c3c' : '#9aa79e';
+    $('cbox').style.color = ck ? '#fff' : 'transparent';
+    $('sbtn').textContent = t >= 18.05 ? 'Recording your signature…' : 'Sign and complete';
+    $('sbtn').style.background = t > 18.0 && t < 18.25 ? '#183b2c' : '#244c3c';
+  }
+
+  // 03 privacy
+  if (sceneOn('sPriv', t, CUT.priv, CUT.rec)) {
+    rise($('lPriv'), t, 20.05, CUT.rec, 40);
+    const pv = vis(t, 20.2, CUT.rec, 0.7);
+    $('uPage').style.opacity = pv.v;
+    $('uPage').style.transform = `translateY(${(1 - pv.pi) * 50}px) scale(${UI.uPage})`;
+    [...$('rows').children].forEach((row, i) => {
+      const f = prog(t, 21.0 + i * 0.125, 21.15 + i * 0.125); // beat-grid: one row per 16th
+      const pl = row.querySelector('.plain'), hx = row.querySelector('.hex');
+      if (pl) { pl.style.opacity = 1 - f; pl.style.filter = `blur(${f * 3}px)`; }
+      if (hx) { hx.style.opacity = f; }
+    });
+    const lp = prog(t, 22.5, 22.8);
+    $('lock').style.opacity = lp > 0 ? 1 : 0;
+    $('lock').style.transform = `scale(${lp < 1 ? lerp(0.3, 1, back(lp)) : 1})`;
+    for (const [id, tin, dx] of [['uChip1', 23.0, 60], ['uChip2', 23.5, 60]]) {
+      const c = vis(t, tin, CUT.rec, 0.5);
+      $(id).style.opacity = c.v;
+      $(id).style.transform = `translateX(${(1 - c.pi) * dx}px) scale(${UI[id]})`;
+    }
+  }
+
+  // 04 record
+  if (sceneOn('sRec', t, CUT.rec, CUT.ver)) {
+    rise($('l5'), t, 25.05, CUT.ver, 40);
+    const dv = vis(t, 25.2, CUT.ver, 0.7);
+    $('u5doc').style.opacity = dv.v;
+    $('u5doc').style.transform = `translateY(${(1 - dv.pi) * 60}px) rotate(${2 + (1 - dv.pi) * 4}deg) scale(${UI.u5doc})`;
+    const sp = prog(t, 26.0, 26.3);
+    $('stamp').style.opacity = sp > 0 ? 1 : 0;
+    $('stamp').style.transform = `rotate(-12deg) scale(${sp < 1 ? lerp(1.9, 1, eo(sp)) : 1})`;
+    $('seal').style.opacity = 0.35 + 0.65 * prog(t, 26.05, 26.25);
+    const st = vis(t, 26.5, CUT.ver, 0.55);
+    $('u5status').style.opacity = st.v;
+    $('u5status').style.transform = `translateX(${(1 - st.pi) * 80}px) scale(${UI.u5status})`;
+    const cr = vis(t, 27.5, CUT.ver, 0.6);
+    $('u5res').style.opacity = cr.v;
+    $('u5res').style.transform = `translateY(${(1 - cr.pi) * -30}px) scale(${UI.u5res})`;
+    $('hash').textContent = CHAIN_HASH.slice(0, Math.floor(prog(t, 27.75, 28.75) * 64));
+  }
+
+  // 05 verify
+  if (sceneOn('sVer', t, CUT.ver, CUT.out)) {
+    rise($('lVer'), t, 31.05, CUT.out, 40);
+    card('uVer', t, 31.2, CUT.out);
+    const pasted = t >= 32.0;
+    $('vph').style.display = pasted ? 'none' : '';
+    $('vval').textContent = pasted ? SEAL_HASH : '';
+    $('vgo').textContent = t >= 32.5 && t < 33.0 ? 'Checking…' : 'Verify document';
+    $('vgo').style.background = t > 32.45 && t < 33.0 ? '#183b2c' : '#244c3c';
+    const r = eo(prog(t, 33.0, 33.4));
+    $('vresult').style.opacity = r;
+    $('vresult').style.transform = `translateY(${(1 - r) * 16}px)`;
+    ['ck1', 'ck2', 'ck3'].forEach((id, k) => { // beat-grid: every other 8th from 33.5s
+      const c = eo(prog(t, 33.5 + k * 0.5, 33.8 + k * 0.5));
+      $(id).style.opacity = c; $(id).style.transform = `translateX(${(1 - c) * 12}px)`;
+    });
+  }
+
+  // outro
+  if (sceneOn('s6', t, CUT.out, 99)) {
+    rise($('out-title'), t, 35.55, null, 40, 0.6);
+    rise($('out-brand'), t, 36.0, null, 20);
+    const c = vis(t, 36.5, null, 0.55);
+    $('out-cta').style.opacity = c.pi;
+    $('out-cta').style.transform = `translateX(-50%) translateY(${(1 - c.pi) * 24}px) scale(${t > 38.0 && t < 38.2 ? 0.97 : 1})`;
+    $('out-foot').style.opacity = eo(prog(t, 37.0, 37.5));
+  }
+
+  cursor(t,
+    t >= CUT.id && t < CUT.consent ? [[10.9, 1520, 860], [11.5, 1290, 760, true], [12.0, 1330, 820]]
+    : t >= CUT.consent && t < CUT.priv ? [[16.9, 1520, 600], [17.25, 1145, 690, true], [18.0, 1300, 820, true], [18.6, 1360, 860]]
+    : t >= CUT.ver && t < CUT.out ? [[31.9, 1700, 900], [32.5, 1300, 650, true], [33.0, 1320, 700]]
+    : t >= CUT.out ? [[37.6, 1150, 830], [38.0, 1000, 690, true], [38.7, 1010, 700]] : null);
+};
+const pre = new Image(); pre.src = 'logo.png';
+window.ready = Promise.all([document.fonts.ready, ...[...document.images, pre].map((i) => i.complete ? 1 : new Promise((r) => (i.onload = i.onerror = r)))]);
+seek(0);
+</script>
+</body>
+</html>
